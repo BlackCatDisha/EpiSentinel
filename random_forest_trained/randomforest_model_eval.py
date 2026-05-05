@@ -67,11 +67,11 @@ y_test = test[target]
 # 5. MODEL
 # ==============================
 model = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=8,
-    min_samples_split=5,
-    random_state=42,
-    class_weight="balanced"
+    n_estimators=300,
+    max_depth=10,
+    min_samples_split=3,
+    class_weight={0:1, 1:2},  # 🔥 boost outbreak importance
+    random_state=42
 )
 
 model.fit(X_train, y_train)
@@ -79,7 +79,8 @@ model.fit(X_train, y_train)
 # ==============================
 # 6. PREDICT
 # ==============================
-preds = model.predict(X_test)
+probs = model.predict_proba(X_test)[:, 1]
+preds = (probs > 0.4).astype(int)   # 🔥 lower threshold
 
 # ==============================
 # 7. EVALUATION
