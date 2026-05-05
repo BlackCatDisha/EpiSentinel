@@ -1,0 +1,31 @@
+{
+  "feature_columns": [
+    "district",
+    "year",
+    "iso_week",
+    "dengue_cases_reported",
+    "dengue_deaths_weekly",
+    "temperature_mean_week",
+    "humidity_mean_week",
+    "rainfall_total_week",
+    "temperature_max_week",
+    "humidity_max_week",
+    "population_2011",
+    "cases_per_100k",
+    "cases_lag1",
+    "cases_lag2",
+    "cases_lag3",
+    "cases_roll2_mean",
+    "cases_roll4_mean",
+    "temperature_mean_week_lag1",
+    "temperature_mean_week_lag2",
+    "humidity_mean_week_lag1",
+    "humidity_mean_week_lag2",
+    "rainfall_total_week_lag1",
+    "rainfall_total_week_lag2",
+    "week_sin",
+    "week_cos",
+    "district_case_q75",
+    "is_unreliable_2017_peak_week"
+  ]
+}
