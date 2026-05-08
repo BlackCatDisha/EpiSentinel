@@ -1,0 +1,191 @@
+{
+    "Kolar": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 7,
+        "risk_score_percent": 80.2
+    },
+    "Mysuru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 7.0,
+        "predicted_cases_next_week": 11,
+        "risk_score_percent": 72.6
+    },
+    "Chitradurga": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 8.0,
+        "predicted_cases_next_week": 11,
+        "risk_score_percent": 69.5
+    },
+    "Chamarajanagara": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 4.0,
+        "predicted_cases_next_week": 7,
+        "risk_score_percent": 67.9
+    },
+    "Kodagu": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 3,
+        "risk_score_percent": 67.5
+    },
+    "Belagavi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 2.0,
+        "predicted_cases_next_week": 10,
+        "risk_score_percent": 66.6
+    },
+    "Bengaluru Rural": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 65.5
+    },
+    "Shivamogga": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 12.0,
+        "predicted_cases_next_week": 11,
+        "risk_score_percent": 64.7
+    },
+    "Mandya": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 9,
+        "risk_score_percent": 61.2
+    },
+    "Tumakuru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.25,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 61.1
+    },
+    "Raichur": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 2,
+        "risk_score_percent": 59.3
+    },
+    "Chikkamagaluru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 54.9
+    },
+    "Vijayapura": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 54.1
+    },
+    "Uttara Kannada": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 52.2
+    },
+    "Dharwad": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.25,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 51.6
+    },
+    "Koppal": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 49.8
+    },
+    "Bagalkote": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 49.8
+    },
+    "Bidar": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 46.3
+    },
+    "Kalaburagi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 9,
+        "risk_score_percent": 45.0
+    },
+    "Ballari": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.25,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 43.9
+    },
+    "Gadag": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 42.8
+    },
+    "Hassan": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.25,
+        "predicted_cases_next_week": 3,
+        "risk_score_percent": 42.6
+    },
+    "Davangere": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 7.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 41.4
+    },
+    "Haveri": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 2,
+        "risk_score_percent": 38.6
+    },
+    "Dakshina Kannada": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 10.0,
+        "predicted_cases_next_week": 13,
+        "risk_score_percent": 36.7
+    },
+    "Bengaluru Urban": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 9,
+        "risk_score_percent": 30.7
+    },
+    "Udupi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 8.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 25.4
+    }
+}
