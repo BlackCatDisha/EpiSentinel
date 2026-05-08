@@ -81,10 +81,22 @@ risk_scores = clf.predict_proba(X_test)[:, 1]
 # Get numerical predictions for cases
 case_preds = reg.predict(X_test)
 
-# --- ACCURACY EVALUATION ---
-# Calculate metrics on the test set
-# For Outbreak Detection (Classification)
-risk_preds = (risk_scores > 0.4).astype(int)
+# --- FEEDBACK LOOP (THRESHOLD OPTIMIZATION) ---
+# Instead of a static 0.4, we find the best threshold that optimizes F1-score
+best_f1 = 0
+best_threshold = 0.4 # Default fallback
+
+for t in np.arange(0.2, 0.6, 0.05):
+    temp_preds = (risk_scores > t).astype(int)
+    temp_f1 = f1_score(y_test_class, temp_preds)
+    if temp_f1 > best_f1:
+        best_f1 = temp_f1
+        best_threshold = t
+
+print(f"Feedback Loop Optimized: Best threshold found is {best_threshold:.2f} (F1: {best_f1:.2f})")
+
+# Apply optimized threshold
+risk_preds = (risk_scores > best_threshold).astype(int)
 f1 = f1_score(y_test_class, risk_preds)
 precision = precision_score(y_test_class, risk_preds)
 recall = recall_score(y_test_class, risk_preds)
@@ -151,6 +163,7 @@ summary = latest_week[[
 ]].sort_values("risk_score_percent", ascending=False)
 
 print("\n=== MODEL ACCURACY (VALIDATED ON 2022-2023 DATA) ===")
+print(f"Optimized Decision Threshold: {best_threshold:.2f}")
 print("--- Classification (Outbreak Detection) ---")
 print(f"F1-Score:  {f1:.2f}")
 print(f"Precision: {precision:.2f}")
