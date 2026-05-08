@@ -81,7 +81,7 @@ async function initDashboard() {
                 const tt = d3.select('#tooltip');
                 // Tiny offset for "closer" feel
                 tt.style('left', (event.pageX + 5) + 'px')
-                  .style('top', (event.pageY + 5) + 'px');
+                    .style('top', (event.pageY + 5) + 'px');
             })
             .on('mouseout', function () {
                 d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
