@@ -20,95 +20,24 @@ function initSidebar() {
 
 const GEOJSON_URL = 'https://raw.githubusercontent.com/inosaint/StatesOfIndia/master/karnataka.geojson';
 
+let cachedGeoJSON = null;
+
 async function initDashboard() {
     const mapContainer = document.getElementById('karnataka-map');
-    let width = mapContainer.clientWidth;
-    let height = mapContainer.clientHeight;
-
-    console.log(`Map container size: ${width}x${height}`);
-
-    if (width === 0 || height === 0) {
-        console.warn('Map container has 0 width or height. Using fallback values.');
-        width = 800;
-        height = 600;
-    }
-
-    const svg = d3.select('#karnataka-map')
-        .append('svg')
-        .attr('width', '100%')
-        .attr('height', '100%')
-        .attr('viewBox', `0 0 ${width} ${height}`)
-        .attr('preserveAspectRatio', 'xMidYMid meet');
+    
+    // Add resize listener
+    window.addEventListener('resize', debounce(() => {
+        if (cachedGeoJSON) renderMap(cachedGeoJSON);
+    }, 250));
 
     try {
-        console.log('Fetching GeoJSON from:', GEOJSON_URL);
-        const karnataka = await d3.json(GEOJSON_URL);
-        console.log('GeoJSON loaded successfully:', karnataka);
-
-        document.getElementById('map-loader').style.display = 'none';
-
-        const projection = d3.geoMercator();
-        const path = d3.geoPath().projection(projection);
-
-        // Automatically scale and center the map
-        projection.fitSize([width, height], karnataka);
-
-        const tooltip = d3.select('#tooltip');
-
-        // Bind data and render districts
-        svg.selectAll('.district')
-            .data(karnataka.features)
-            .enter()
-            .append('path')
-            .attr('class', 'district')
-            .attr('d', path)
-            .attr('fill', d => {
-                const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
-                const name = normalizeName(geoName);
-                const data = districtData[name];
-
-                if (!data) {
-                    console.warn(`No data found for district: ${geoName} (normalized: ${name})`);
-                    return '#334155';
-                }
-
-                // Color scale: Green -> Yellow -> Red
-                if (data.risk_score > 70) return '#ef4444';
-                if (data.risk_score > 50) return '#eab308';
-                return '#22c55e';
-            })
-            .on('mouseover', function (event, d) {
-                const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
-                const name = normalizeName(geoName);
-                const data = districtData[name];
-
-                d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
-
-                const tt = document.getElementById('tooltip');
-                tt.classList.remove('hidden');
-                tt.innerHTML = `
-                    <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${name}</div>
-                    <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
-                    <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
-                `;
-            })
-            .on('mousemove', function (event) {
-                const tt = d3.select('#tooltip');
-                // Tiny offset for "closer" feel
-                tt.style('left', (event.pageX + 5) + 'px')
-                    .style('top', (event.pageY + 5) + 'px');
-            })
-            .on('mouseout', function () {
-                d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
-                document.getElementById('tooltip').classList.add('hidden');
-            })
-            .on('click', function (event, d) {
-                const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
-                const name = normalizeName(geoName);
-                showDistrictDetails(name);
-            });
-
-        // Update stats
+        if (!cachedGeoJSON) {
+            console.log('Fetching GeoJSON from:', GEOJSON_URL);
+            cachedGeoJSON = await d3.json(GEOJSON_URL);
+            console.log('GeoJSON loaded successfully');
+        }
+        
+        renderMap(cachedGeoJSON);
         updateGlobalStats();
 
     } catch (error) {
@@ -116,14 +45,17 @@ async function initDashboard() {
         document.getElementById('map-loader').style.display = 'none';
         const errorDiv = document.getElementById('map-error');
         errorDiv.classList.remove('hidden');
-        errorDiv.querySelector('p').innerHTML = `Failed to load the map: ${error.message}. <br><br><strong>Important:</strong> If you are opening the file directly, browsers block external data. Please run: <code>python -m http.server 8000</code> in this folder.`;
-        lucide.createIcons();
+        errorDiv.querySelector('p').innerHTML = `Failed to load the map: ${error.message}.`;
+        lucide.createIcons(); 
     }
 
     // Modal Close Logic
-    document.getElementById('close-modal').addEventListener('click', () => {
-        document.getElementById('district-modal').classList.add('hidden');
-    });
+    const closeBtn = document.getElementById('close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('district-modal').classList.add('hidden');
+        });
+    }
 
     window.addEventListener('click', (event) => {
         const modal = document.getElementById('district-modal');
@@ -131,6 +63,98 @@ async function initDashboard() {
             modal.classList.add('hidden');
         }
     });
+}
+
+function renderMap(karnataka) {
+    const mapContainer = document.getElementById('karnataka-map');
+    if (!mapContainer) return;
+
+    // Clear previous SVG
+    d3.select('#karnataka-map svg').remove();
+
+    let width = mapContainer.clientWidth;
+    let height = mapContainer.clientHeight;
+
+    if (width === 0 || height === 0) {
+        width = mapContainer.parentElement.clientWidth - 40;
+        height = 500;
+    }
+
+    const svg = d3.select('#karnataka-map')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    document.getElementById('map-loader').style.display = 'none';
+
+    const projection = d3.geoMercator();
+    const path = d3.geoPath().projection(projection);
+
+    // Automatically scale and center the map
+    projection.fitSize([width, height], karnataka);
+
+    const tooltip = d3.select('#tooltip');
+
+    // Bind data and render districts
+    svg.selectAll('.district')
+        .data(karnataka.features)
+        .enter()
+        .append('path')
+        .attr('class', 'district')
+        .attr('d', path)
+        .attr('fill', d => {
+            const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const name = normalizeName(geoName);
+            const data = districtData[name];
+
+            if (!data) return '#334155';
+            if (data.risk_score > 70) return '#ef4444';
+            if (data.risk_score > 50) return '#eab308';
+            return '#22c55e';
+        })
+        .on('mouseover', function (event, d) {
+            const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const name = normalizeName(geoName);
+            const data = districtData[name];
+
+            d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
+
+            const tt = document.getElementById('tooltip');
+            tt.classList.remove('hidden');
+            tt.innerHTML = `
+                <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${name}</div>
+                <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
+                <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
+            `;
+        })
+        .on('mousemove', function (event) {
+            const tt = d3.select('#tooltip');
+            tt.style('left', (event.pageX + 5) + 'px')
+              .style('top', (event.pageY + 5) + 'px');
+        })
+        .on('mouseout', function () {
+            d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
+            document.getElementById('tooltip').classList.add('hidden');
+        })
+        .on('click', function (event, d) {
+            const geoName = d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const name = normalizeName(geoName);
+            showDistrictDetails(name);
+        });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 function showDistrictDetails(name) {
