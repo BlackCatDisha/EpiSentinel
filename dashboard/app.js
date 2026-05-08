@@ -69,7 +69,6 @@ async function initDashboard() {
 
                 d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
-                tooltip.classList ? tooltip.classList.remove('hidden') : d3.select('#tooltip').classed('hidden', false);
                 const tt = document.getElementById('tooltip');
                 tt.classList.remove('hidden');
                 tt.innerHTML = `
@@ -80,8 +79,9 @@ async function initDashboard() {
             })
             .on('mousemove', function (event) {
                 const tt = d3.select('#tooltip');
-                tt.style('left', (event.pageX + 10) + 'px')
-                    .style('top', (event.pageY - 20) + 'px');
+                // Tiny offset for "closer" feel
+                tt.style('left', (event.pageX + 5) + 'px')
+                  .style('top', (event.pageY + 5) + 'px');
             })
             .on('mouseout', function () {
                 d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
@@ -104,15 +104,40 @@ async function initDashboard() {
         errorDiv.querySelector('p').innerHTML = `Failed to load the map: ${error.message}. <br><br><strong>Important:</strong> If you are opening the file directly, browsers block external data. Please run: <code>python -m http.server 8000</code> in this folder.`;
         lucide.createIcons();
     }
+
+    // Modal Close Logic
+    document.getElementById('close-modal').addEventListener('click', () => {
+        document.getElementById('district-modal').classList.add('hidden');
+    });
+
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('district-modal');
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
 }
 
 function showDistrictDetails(name) {
     const infoContainer = document.getElementById('district-info');
+    const modal = document.getElementById('district-modal');
     const data = districtData[name];
 
     if (!data) {
         infoContainer.innerHTML = `<div class="empty-state"><p>No detailed data available for ${name}</p></div>`;
+        modal.classList.remove('hidden');
         return;
+    }
+
+    // Determine Badge Color based on risk
+    let badgeColor = 'rgba(34, 197, 94, 0.2)'; // Green
+    let textColor = '#22c55e';
+    if (data.risk_score > 70) {
+        badgeColor = 'rgba(239, 68, 68, 0.2)'; // Red
+        textColor = '#ef4444';
+    } else if (data.risk_score > 50) {
+        badgeColor = 'rgba(234, 179, 8, 0.2)'; // Yellow
+        textColor = '#eab308';
     }
 
     infoContainer.innerHTML = `
@@ -121,7 +146,7 @@ function showDistrictDetails(name) {
                 <h2>${name}</h2>
                 <p style="color: var(--text-muted)">Epidemic Prediction Report</p>
             </div>
-            <div class="badge" style="background: ${data.risk_score > 50 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}; color: ${data.risk_score > 50 ? '#ef4444' : '#22c55e'}; padding: 0.5rem 1rem; border-radius: 2rem; font-weight: 700;">
+            <div class="badge" style="background: ${badgeColor}; color: ${textColor}; padding: 0.5rem 1.2rem; border-radius: 2rem; font-weight: 700; font-size: 0.9rem; border: 1px solid ${textColor}44;">
                 ${data.status.toUpperCase()} RISK
             </div>
         </div>
@@ -129,24 +154,31 @@ function showDistrictDetails(name) {
             <div class="stat-item">
                 <p class="label">Predicted Cases</p>
                 <p class="value">${data.predicted_cases}</p>
-                <p class="trend up">+5% vs avg</p>
+                <p class="trend ${data.predicted_cases > 5 ? 'up' : 'down'}">
+                    ${data.predicted_cases > 5 ? '<i data-lucide="trending-up"></i> +5% vs avg' : '<i data-lucide="trending-down"></i> -2% vs avg'}
+                </p>
             </div>
             <div class="stat-item">
                 <p class="label">Risk Score</p>
                 <p class="value">${data.risk_score}%</p>
-                <p class="trend">Based on RF Model</p>
+                <p class="trend">Random Forest Prediction</p>
             </div>
             <div class="stat-item">
                 <p class="label">Outbreak Threshold</p>
                 <p class="value">${data.threshold}</p>
-                <p class="trend">Weekly Q75</p>
+                <p class="trend">Weekly Q75 Baseline</p>
             </div>
             <div class="stat-item">
                 <p class="label">Recommended Action</p>
-                <p class="value" style="font-size: 1.1rem; color: var(--accent-blue)">${data.risk_score > 60 ? 'Increase Surveillance' : 'Standard Monitoring'}</p>
+                <p class="value" style="font-size: 1.1rem; color: var(--accent-blue)">
+                    ${data.risk_score > 60 ? 'Intensive Surveillance' : 'Routine Monitoring'}
+                </p>
             </div>
         </div>
     `;
+
+    modal.classList.remove('hidden');
+    lucide.createIcons();
 }
 
 function updateGlobalStats() {
