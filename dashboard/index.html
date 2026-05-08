@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpiSentinel | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="shield-check"></i>
+                <span>EpiSentinel</span>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+                <a href="#" class="nav-item"><i data-lucide="bar-chart-3"></i> Analytics</a>
+                <a href="#" class="nav-item"><i data-lucide="map"></i> Districts</a>
+                <a href="#" class="nav-item"><i data-lucide="bell"></i> Alerts</a>
+                <a href="#" class="nav-item"><i data-lucide="settings"></i> Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sentinel" alt="User">
+                    <div class="user-info">
+                        <p class="name">Dr. Sentinel</p>
+                        <p class="role">Epidemiologist</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>District Risk Overview</h1>
+                <div class="header-actions">
+                    <span class="date-picker">May 2026, Week 50</span>
+                    <button class="btn btn-primary"><i data-lucide="download"></i> Export Report</button>
+                </div>
+            </header>
+
+            <!-- Stats Row -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon case-icon"><i data-lucide="activity"></i></div>
+                    <div class="stat-info">
+                        <p class="label">Total Predicted Cases</p>
+                        <h2 id="total-cases">168</h2>
+                        <p class="trend up"><i data-lucide="trending-up"></i> +12% from last week</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon risk-icon"><i data-lucide="alert-triangle"></i></div>
+                    <div class="stat-info">
+                        <p class="label">Avg Risk Score</p>
+                        <h2 id="avg-risk">52.4%</h2>
+                        <p class="trend neutral">Steady</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon district-icon"><i data-lucide="map-pin"></i></div>
+                    <div class="stat-info">
+                        <p class="label">High Risk Districts</p>
+                        <h2 id="high-risk-count">8</h2>
+                        <p class="trend down"><i data-lucide="trending-down"></i> -2 since yesterday</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon alert-icon"><i data-lucide="flame"></i></div>
+                    <div class="stat-info">
+                        <p class="label">Active Outbreak Alerts</p>
+                        <h2 id="active-alerts">3</h2>
+                        <p class="trend up">Action Required</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Map and Chatbot Section -->
+            <section class="main-grid">
+                <!-- Map Container -->
+                <div class="card map-container">
+                    <div class="card-header">
+                        <h3>Karnataka District Analysis</h3>
+                        <div class="map-controls">
+                            <span class="legend-item"><span class="color low"></span> Low</span>
+                            <span class="legend-item"><span class="color medium"></span> Med</span>
+                            <span class="legend-item"><span class="color high"></span> High</span>
+                        </div>
+                    </div>
+                    <div id="karnataka-map">
+                        <!-- SVG Map will be rendered here -->
+                        <div id="map-loader" class="loader"></div>
+                        <div id="map-error" class="error-message hidden">
+                            <i data-lucide="alert-circle"></i>
+                            <p>Failed to load the map. This is usually due to CORS restrictions when opening the file directly. Please run a local server as described in the walkthrough.</p>
+                        </div>
+                    </div>
+                    <div id="tooltip" class="tooltip hidden"></div>
+                </div>
+
+                <!-- Chatbot Container -->
+                <div class="card chatbot-container">
+                    <div class="card-header">
+                        <h3><i data-lucide="message-square"></i> Sentinel AI</h3>
+                        <div class="chat-status">Online</div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message system">
+                            <p>Hello! I am Sentinel AI. How can I help you analyze the epidemic data today?</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" placeholder="Ask about district risks..." id="chat-input">
+                        <button id="send-btn"><i data-lucide="send"></i></button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal for District Details -->
+    <div id="district-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="close-modal" id="close-modal">&times;</button>
+            <div id="district-info">
+                <!-- Data populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
