@@ -97,6 +97,37 @@ results["outbreak_threshold"] = test["district_case_q75"]
 # ==============================
 # 7. DISTRICT-WISE SUMMARY (LATEST WEEK)
 # ==============================
+# --- EXPLAINABILITY LAYER ---
+# Map feature names to readable labels
+readable_features = {
+    'temperature_mean_week': 'High Average Temperature',
+    'humidity_mean_week': 'High Humidity Levels',
+    'rainfall_total_week': 'Heavy Rainfall',
+    'cases_lag1': 'Rising Case Trend',
+    'population_2011': 'High Population Density',
+    'cases_lag2': 'Sustained Local Transmission',
+    'cases_per_100k': 'High Case Density'
+}
+
+importances = clf.feature_importances_
+feature_names = features
+
+def get_top_driver(row):
+    # Find which feature (multiplied by importance) had the highest impact
+    contributions = []
+    for i, feat in enumerate(feature_names):
+        # Contribution = Global Importance * Feature Value
+        val = row[feat]
+        impact = val * importances[i]
+        contributions.append((feat, impact))
+    
+    # Sort by impact
+    top_feat = sorted(contributions, key=lambda x: x[1], reverse=True)[0][0]
+    return readable_features.get(top_feat, top_feat.replace('_', ' ').title())
+
+# Apply explainability to the results
+results['top_driver'] = results.apply(get_top_driver, axis=1)
+
 # Get the most recent week in the test set to show "current" status
 latest_week = results.sort_values(["year", "iso_week"], ascending=False).drop_duplicates("district")
 
@@ -106,7 +137,8 @@ summary = latest_week[[
     "iso_week", 
     "outbreak_threshold", 
     "predicted_cases_next_week", 
-    "risk_score_percent"
+    "risk_score_percent",
+    "top_driver"
 ]].sort_values("risk_score_percent", ascending=False)
 
 print("\n=== MODEL ACCURACY (VALIDATED ON 2022-2023 DATA) ===")

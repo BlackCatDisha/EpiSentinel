@@ -4,188 +4,215 @@
         "iso_week": 50,
         "outbreak_threshold": 0.0,
         "predicted_cases_next_week": 7,
-        "risk_score_percent": 80.2
+        "risk_score_percent": 80.2,
+        "top_driver": "High Population Density"
     },
     "Mysuru": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 7.0,
         "predicted_cases_next_week": 11,
-        "risk_score_percent": 72.6
+        "risk_score_percent": 72.6,
+        "top_driver": "High Population Density"
     },
     "Chitradurga": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 8.0,
         "predicted_cases_next_week": 11,
-        "risk_score_percent": 69.5
+        "risk_score_percent": 69.5,
+        "top_driver": "High Population Density"
     },
     "Chamarajanagara": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 4.0,
         "predicted_cases_next_week": 7,
-        "risk_score_percent": 67.9
+        "risk_score_percent": 67.9,
+        "top_driver": "High Population Density"
     },
     "Kodagu": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 1.0,
         "predicted_cases_next_week": 3,
-        "risk_score_percent": 67.5
+        "risk_score_percent": 67.5,
+        "top_driver": "High Population Density"
     },
     "Belagavi": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 2.0,
         "predicted_cases_next_week": 10,
-        "risk_score_percent": 66.6
+        "risk_score_percent": 66.6,
+        "top_driver": "High Population Density"
     },
     "Bengaluru Rural": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 0.0,
         "predicted_cases_next_week": 5,
-        "risk_score_percent": 65.5
+        "risk_score_percent": 65.5,
+        "top_driver": "High Population Density"
     },
     "Shivamogga": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 12.0,
         "predicted_cases_next_week": 11,
-        "risk_score_percent": 64.7
+        "risk_score_percent": 64.7,
+        "top_driver": "High Population Density"
     },
     "Mandya": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 3.0,
         "predicted_cases_next_week": 9,
-        "risk_score_percent": 61.2
+        "risk_score_percent": 61.2,
+        "top_driver": "High Population Density"
     },
     "Tumakuru": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 3.25,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 61.1
+        "risk_score_percent": 61.1,
+        "top_driver": "High Population Density"
     },
     "Raichur": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 0.0,
         "predicted_cases_next_week": 2,
-        "risk_score_percent": 59.3
+        "risk_score_percent": 59.3,
+        "top_driver": "High Population Density"
     },
     "Chikkamagaluru": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 3.0,
         "predicted_cases_next_week": 5,
-        "risk_score_percent": 54.9
+        "risk_score_percent": 54.9,
+        "top_driver": "High Population Density"
     },
     "Vijayapura": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 6.0,
         "predicted_cases_next_week": 6,
-        "risk_score_percent": 54.1
+        "risk_score_percent": 54.1,
+        "top_driver": "High Population Density"
     },
     "Uttara Kannada": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 0.0,
         "predicted_cases_next_week": 5,
-        "risk_score_percent": 52.2
+        "risk_score_percent": 52.2,
+        "top_driver": "High Population Density"
     },
     "Dharwad": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 0.25,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 51.6
+        "risk_score_percent": 51.6,
+        "top_driver": "High Population Density"
     },
     "Koppal": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 5.0,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 49.8
+        "risk_score_percent": 49.8,
+        "top_driver": "High Population Density"
     },
     "Bagalkote": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 3.0,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 49.8
+        "risk_score_percent": 49.8,
+        "top_driver": "High Population Density"
     },
     "Bidar": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 1.0,
         "predicted_cases_next_week": 5,
-        "risk_score_percent": 46.3
+        "risk_score_percent": 46.3,
+        "top_driver": "High Population Density"
     },
     "Kalaburagi": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 6.0,
         "predicted_cases_next_week": 9,
-        "risk_score_percent": 45.0
+        "risk_score_percent": 45.0,
+        "top_driver": "High Population Density"
     },
     "Ballari": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 5.25,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 43.9
+        "risk_score_percent": 43.9,
+        "top_driver": "High Population Density"
     },
     "Gadag": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 5.0,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 42.8
+        "risk_score_percent": 42.8,
+        "top_driver": "High Population Density"
     },
     "Hassan": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 3.25,
         "predicted_cases_next_week": 3,
-        "risk_score_percent": 42.6
+        "risk_score_percent": 42.6,
+        "top_driver": "High Population Density"
     },
     "Davangere": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 7.0,
         "predicted_cases_next_week": 4,
-        "risk_score_percent": 41.4
+        "risk_score_percent": 41.4,
+        "top_driver": "High Population Density"
     },
     "Haveri": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 6.0,
         "predicted_cases_next_week": 2,
-        "risk_score_percent": 38.6
+        "risk_score_percent": 38.6,
+        "top_driver": "High Population Density"
     },
     "Dakshina Kannada": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 10.0,
         "predicted_cases_next_week": 13,
-        "risk_score_percent": 36.7
+        "risk_score_percent": 36.7,
+        "top_driver": "High Population Density"
     },
     "Bengaluru Urban": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 1.0,
         "predicted_cases_next_week": 9,
-        "risk_score_percent": 30.7
+        "risk_score_percent": 30.7,
+        "top_driver": "High Population Density"
     },
     "Udupi": {
         "year": 2023,
         "iso_week": 50,
         "outbreak_threshold": 8.0,
         "predicted_cases_next_week": 6,
-        "risk_score_percent": 25.4
+        "risk_score_percent": 25.4,
+        "top_driver": "High Population Density"
     }
 }

@@ -203,9 +203,11 @@ function showDistrictDetails(name) {
                 <p class="trend">Random Forest Prediction</p>
             </div>
             <div class="stat-item">
-                <p class="label">Outbreak Threshold</p>
-                <p class="value">${data.threshold}</p>
-                <p class="trend">Weekly Q75 Baseline</p>
+                <p class="label">Primary Risk Driver</p>
+                <p class="value" style="font-size: 1.1rem; color: var(--primary-red)">
+                    ${data.top_driver || 'Environmental Conditions'}
+                </p>
+                <p class="trend">Explainability Layer (XAI)</p>
             </div>
             <div class="stat-item">
                 <p class="label">Recommended Action</p>
