@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, f1_score
+from sklearn.metrics import mean_absolute_error, f1_score, precision_score, recall_score, accuracy_score, r2_score, mean_squared_error
 import numpy as np
 
 
@@ -83,9 +83,18 @@ case_preds = reg.predict(X_test)
 
 # --- ACCURACY EVALUATION ---
 # Calculate metrics on the test set
+# For Outbreak Detection (Classification)
+risk_preds = (risk_scores > 0.4).astype(int)
+f1 = f1_score(y_test_class, risk_preds)
+precision = precision_score(y_test_class, risk_preds)
+recall = recall_score(y_test_class, risk_preds)
+accuracy = accuracy_score(y_test_class, risk_preds)
+
+# For Case Quantification (Regression)
 mae = mean_absolute_error(y_test_reg, case_preds)
-# For F1, we use the best threshold from our other script or 0.4 as a standard
-f1 = f1_score(y_test_class, (risk_scores > 0.4).astype(int))
+mse = mean_squared_error(y_test_reg, case_preds)
+rmse = np.sqrt(mse)
+r2 = r2_score(y_test_reg, case_preds)
 
 # Create results dataframe
 results = test.copy()
@@ -142,8 +151,16 @@ summary = latest_week[[
 ]].sort_values("risk_score_percent", ascending=False)
 
 print("\n=== MODEL ACCURACY (VALIDATED ON 2022-2023 DATA) ===")
-print(f"Case Prediction Error (MAE): {mae:.2f} cases")
-print(f"Outbreak Detection (F1-Score): {f1:.2f}")
+print("--- Classification (Outbreak Detection) ---")
+print(f"F1-Score:  {f1:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall:    {recall:.2f}")
+print(f"Accuracy:  {accuracy:.2f}")
+
+print("\n--- Regression (Case Quantification) ---")
+print(f"Mean Absolute Error (MAE):    {mae:.2f} cases")
+print(f"Root Mean Squared Error (RMSE): {rmse:.2f} cases")
+print(f"R-Squared (R2) Score:         {r2:.2f}")
 
 print("\n=== DISTRICT-WISE QUANTIFIED PREDICTIONS (LATEST WEEK) ===")
 print("Note: These are raw weekly case counts (total people).")
