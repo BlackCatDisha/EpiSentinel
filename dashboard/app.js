@@ -1,7 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    initSidebar();
     initDashboard();
     initChatbot();
 });
+
+function initSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+
+    if (!sidebar || !toggleBtn) {
+        console.warn('Sidebar or toggle button not found');
+        return;
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+    });
+}
 
 const GEOJSON_URL = 'https://raw.githubusercontent.com/inosaint/StatesOfIndia/master/karnataka.geojson';
 

@@ -12,17 +12,33 @@
 <body class="dark-theme">
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <i data-lucide="shield-check"></i>
-                <span>EpiSentinel</span>
+        <aside class="sidebar collapsed" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="shield-check"></i>
+                    <span class="logo-text">EpiSentinel</span>
+                </div>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i data-lucide="chevron-right"></i>
+                </button>
             </div>
             <nav>
-                <a href="#" class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-                <a href="#" class="nav-item"><i data-lucide="bar-chart-3"></i> Analytics</a>
-                <a href="#" class="nav-item"><i data-lucide="map"></i> Districts</a>
-                <a href="#" class="nav-item"><i data-lucide="bell"></i> Alerts</a>
-                <a href="#" class="nav-item"><i data-lucide="settings"></i> Settings</a>
+                <a href="#" class="nav-item active" title="Dashboard">
+                    <i data-lucide="layout-dashboard"></i> 
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" title="Analytics">
+                    <i data-lucide="bar-chart-3"></i> 
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="#" class="nav-item" title="Districts">
+                    <i data-lucide="map"></i> 
+                    <span class="nav-text">Districts</span>
+                </a>
+                <a href="#" class="nav-item" title="Alerts">
+                    <i data-lucide="bell"></i> 
+                    <span class="nav-text">Alerts</span>
+                </a>
             </nav>
             <div class="sidebar-footer">
                 <div class="user-profile">
