@@ -1,7 +1,5 @@
 {
   "feature_columns": [
-    "district",
-    "year",
     "iso_week",
     "dengue_cases_reported",
     "dengue_deaths_weekly",
@@ -24,8 +22,6 @@
     "rainfall_total_week_lag1",
     "rainfall_total_week_lag2",
     "week_sin",
-    "week_cos",
-    "district_case_q75",
-    "is_unreliable_2017_peak_week"
+    "week_cos"
   ]
 }

@@ -1,0 +1,105 @@
+=================================================================
+GLOBAL MODEL BEHAVIOUR
+What drives outbreak predictions overall?
+=================================================================
+   1. district population                             avg impact=0.940   ↓ higher value → less outbreak risk
+   2. 4-week rolling average of reported cases        avg impact=0.278   ↑ higher value → more outbreak risk
+   3. average temperature 2 weeks ago                 avg impact=0.124   ↑ higher value → more outbreak risk
+   4. 2-week rolling average of reported cases        avg impact=0.120   ↑ higher value → more outbreak risk
+   5. week of the year                                avg impact=0.118   ↑ higher value → more outbreak risk
+   6. average temperature last week                   avg impact=0.114   ↓ higher value → less outbreak risk
+   7. cases reported 3 weeks ago                      avg impact=0.102   ↑ higher value → more outbreak risk
+   8. average temperature this week                   avg impact=0.076   ↓ higher value → less outbreak risk
+   9. total rainfall last week                        avg impact=0.072   ↑ higher value → more outbreak risk
+  10. cases per 100,000 population                    avg impact=0.071   ↑ higher value → more outbreak risk
+
+=================================================================
+SAMPLE PREDICTIONS — Detailed Explanations
+=================================================================
+
+[HIGH RISK #1]
+─────────────────────────────────────────────────────────────────
+District : Kolar   |   Year: 2023   |   Week: 49
+Verdict  : ⚠️  OUTBREAK PREDICTED
+Outbreak probability : 98.4%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that INCREASED outbreak risk:
+    + district population was 1536401  →  pushed risk up by +3.185
+    + average temperature last week was 21.87  →  pushed risk up by +0.283
+    + 4-week rolling average of reported cases was 7.50  →  pushed risk up by +0.230
+    + cases reported 3 weeks ago was 7.00  →  pushed risk up by +0.210
+  Factors that DECREASED outbreak risk:
+    - total rainfall last week was 15.87  →  pushed risk down by -0.214
+
+[HIGH RISK #2]
+─────────────────────────────────────────────────────────────────
+District : Bengaluru Rural   |   Year: 2022   |   Week: 38
+Verdict  : ⚠️  OUTBREAK PREDICTED
+Outbreak probability : 98.3%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that INCREASED outbreak risk:
+    + district population was 990923  →  pushed risk up by +3.599
+    + 4-week rolling average of reported cases was 5.75  →  pushed risk up by +0.216
+    + week of the year was 38  →  pushed risk up by +0.137
+    + cases reported 3 weeks ago was 8.00  →  pushed risk up by +0.117
+    + average temperature last week was 22.94  →  pushed risk up by +0.115
+
+[HIGH RISK #3]
+─────────────────────────────────────────────────────────────────
+District : Kolar   |   Year: 2023   |   Week: 42
+Verdict  : ⚠️  OUTBREAK PREDICTED
+Outbreak probability : 98.0%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that INCREASED outbreak risk:
+    + district population was 1536401  →  pushed risk up by +3.144
+    + 4-week rolling average of reported cases was 8.00  →  pushed risk up by +0.226
+    + week of the year was 42  →  pushed risk up by +0.208
+    + cases reported 3 weeks ago was 8.00  →  pushed risk up by +0.167
+    + 2-week rolling average of reported cases was 12.00  →  pushed risk up by +0.165
+
+[LOW RISK  #1]
+─────────────────────────────────────────────────────────────────
+District : Mandya   |   Year: 2023   |   Week: 7
+Verdict  : ✅  NO OUTBREAK PREDICTED
+Outbreak probability : 6.5%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that DECREASED outbreak risk:
+    - average humidity this week was 7.95  →  pushed risk down by -0.996
+    - district population was 1805769  →  pushed risk down by -0.752
+    - average humidity last week was 10.01  →  pushed risk down by -0.388
+    - week of the year was 7  →  pushed risk down by -0.194
+    - average temperature 2 weeks ago was 23.02  →  pushed risk down by -0.178
+
+[LOW RISK  #2]
+─────────────────────────────────────────────────────────────────
+District : Davangere   |   Year: 2023   |   Week: 8
+Verdict  : ✅  NO OUTBREAK PREDICTED
+Outbreak probability : 7.9%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that DECREASED outbreak risk:
+    - district population was 1643494  →  pushed risk down by -0.771
+    - average humidity last week was 5.71  →  pushed risk down by -0.465
+    - week of the year was 8  →  pushed risk down by -0.329
+    - average humidity 2 weeks ago was 9.91  →  pushed risk down by -0.204
+    - cases per 100,000 population was 0.18  →  pushed risk down by -0.173
+
+[LOW RISK  #3]
+─────────────────────────────────────────────────────────────────
+District : Vijayapura   |   Year: 2023   |   Week: 16
+Verdict  : ✅  NO OUTBREAK PREDICTED
+Outbreak probability : 9.5%  (high confidence)
+
+Why did the model make this prediction?
+  Factors that INCREASED outbreak risk:
+    + maximum temperature this week was 33.35  →  pushed risk up by +0.212
+  Factors that DECREASED outbreak risk:
+    - district population was 2177331  →  pushed risk down by -0.854
+    - average humidity last week was 9.77  →  pushed risk down by -0.379
+    - average humidity this week was 10.26  →  pushed risk down by -0.201
+    - average temperature this week was 32.45  →  pushed risk down by -0.151
+

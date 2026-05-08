@@ -1,6 +1,19 @@
 """
 EpiSentinel — Dengue Outbreak Prediction Pipeline
 Target: target_outbreak_plus1 (binary, next-week outbreak)
+
+v4 fixes applied:
+  1. district_case_q75 dropped — per-district historical constant that re-encodes
+     geographic identity as a number, defeating the purpose of dropping 'district'.
+  2. is_unreliable_2017_peak_week dropped from features — data-quality audit flag
+     that does not exist at inference time. Used only to filter rows from training.
+  3. TimeSeriesSplit on row index replaced with a global calendar (year, iso_week)
+     panel-aware CV so fold boundaries are consistent across all districts.
+  4. Threshold search now enforces a minimum recall floor (MIN_RECALL_TARGET=0.85)
+     before optimising F1 — appropriate for public-health surveillance.
+  5. Final model (Step 9 merged into Step 6) is evaluated on X_test and those
+     metrics are stored in the artifact — not the CV-refitted estimator's metrics.
+  6. district and year remain excluded from features (carried over from v3).
 """
 
 import warnings
@@ -12,7 +25,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import joblib
 
-from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import (
     precision_score, recall_score, f1_score, roc_auc_score,
     precision_recall_curve, confusion_matrix, ConfusionMatrixDisplay,
@@ -32,16 +45,38 @@ PR_CURVE_OUT = "precision_recall_curve.png"
 CM_OUT       = "confusion_matrix.png"
 
 TARGET       = "target_outbreak_plus1"
+
+# Columns that carry future information — hard leakage at training time.
 LEAKAGE_COLS = [
     "target_cases_plus1", "target_cases_plus2",
     "target_outbreak_plus2",
     "exclude_target_plus1", "exclude_target_plus2",
     "exclude_training_row",
 ]
+
+# Non-causal columns excluded from model features:
+#   district              — geographic identity; model must generalise across districts.
+#   year                  — spurious temporal shortcut with no meaning at deployment.
+#   district_case_q75     — per-district historical constant; effectively re-encodes
+#                           district identity as a float, defeating the drop of 'district'.
+#   is_unreliable_2017_peak_week — data-quality audit flag; not available at inference
+#                           time. Used below ONLY to filter bad rows before training.
+DROP_FROM_FEATURES = [
+    "district",
+    "year",
+    "district_case_q75",
+    "is_unreliable_2017_peak_week",
+]
+
 SORT_KEYS    = ["district", "year", "iso_week"]
 TEST_FRAC    = 0.20
 RANDOM_SEED  = 42
 IMBALANCE_WARN_THRESH = 0.90
+
+# Threshold selection: in public-health surveillance a missed outbreak (false
+# negative) is far more costly than a false alarm. We require recall ≥
+# MIN_RECALL_TARGET before maximising F1.
+MIN_RECALL_TARGET = 0.85
 
 # ─────────────────────────────────────────────
 # 1. LOAD
@@ -85,27 +120,29 @@ print("\n" + "=" * 60)
 print("STEP 3 — Preprocessing")
 print("=" * 60)
 
+# Sort chronologically. 'year' is used here for ordering only — not fed to model.
 df = df.sort_values(SORT_KEYS).reset_index(drop=True)
 
-# Encode district as stable integer codes (sorted alphabetically so the
-# mapping is deterministic across runs and SHAP-compatible).
-# We do NOT use enable_categorical=True in XGBoost because SHAP's
-# TreeExplainer raises NotImplementedError for models with categorical
-# split nodes. Integer-encoded districts work identically for XGBoost
-# and are fully supported by SHAP.
-all_districts = sorted(df["district"].unique().tolist())
-district_map  = {d: i for i, d in enumerate(all_districts)}
-df["district"] = df["district"].map(district_map).astype(np.int64)
-print(f"district encoded: {len(all_districts)} unique districts → int64")
+# ── Filter unreliable rows BEFORE building X ───────────────────────────────
+# The flag must never be a feature (won't exist at inference time), but it is
+# valid to use it to exclude noisy rows from training and evaluation.
+n_before = len(df)
+if "is_unreliable_2017_peak_week" in df.columns:
+    df = df[df["is_unreliable_2017_peak_week"] == False].reset_index(drop=True)
+    n_removed = n_before - len(df)
+    print(f"Removed {n_removed} rows flagged is_unreliable_2017_peak_week=True.")
 
-# Drop leakage columns + target
-drop_cols     = LEAKAGE_COLS + [TARGET]
-existing_drop = [c for c in drop_cols if c in df.columns]
+# Drop leakage cols + target + non-causal feature cols
+all_drop      = LEAKAGE_COLS + [TARGET] + DROP_FROM_FEATURES
+existing_drop = [c for c in all_drop if c in df.columns]
 X_full = df.drop(columns=existing_drop)
 y_full = df[TARGET].astype(int)
 
+dropped_actual = [c for c in DROP_FROM_FEATURES if c in df.columns]
+print(f"Dropped from features: {dropped_actual}")
+
 # Ensure all columns are numeric
-for col in X_full.columns:
+for col in list(X_full.columns):
     if X_full[col].dtype == bool:
         X_full[col] = X_full[col].astype(int)
     elif X_full[col].dtype == object:
@@ -116,6 +153,7 @@ for col in X_full.columns:
             X_full = X_full.drop(columns=[col])
 
 print(f"Feature matrix shape: {X_full.shape}")
+print(f"Features used: {X_full.columns.tolist()}")
 
 miss_feat = X_full.isnull().mean()
 miss_feat_warn = miss_feat[miss_feat > 0.30]
@@ -123,18 +161,34 @@ if not miss_feat_warn.empty:
     print(f"\n  ⚠  Feature columns with >30% NaN:\n{miss_feat_warn.to_string()}")
 
 # ─────────────────────────────────────────────
-# 4. TRAIN / TEST SPLIT (time-aware, 80/20)
+# 4. PANEL-AWARE TRAIN / TEST SPLIT
 # ─────────────────────────────────────────────
+# Split on a global calendar (year, iso_week) cutoff so that ALL districts'
+# rows with dates > cutoff land in test, and ALL rows with dates ≤ cutoff land
+# in train. A simple row-count cut on sorted panel data would mix "future" rows
+# from late-sorted districts into train.
 print("\n" + "=" * 60)
-print("STEP 4 — Time-Aware Train/Test Split")
+print("STEP 4 — Panel-Aware Train/Test Split (calendar cutoff)")
 print("=" * 60)
 
-split_idx = int(len(X_full) * (1 - TEST_FRAC))
-X_train = X_full.iloc[:split_idx].copy()
-X_test  = X_full.iloc[split_idx:].copy()
-y_train = y_full.iloc[:split_idx].copy()
-y_test  = y_full.iloc[split_idx:].copy()
+# Build a sortable (year, iso_week) key. 'year' was dropped from X_full but
+# is still available in df at matching row positions (same sort order).
+timeline       = df[["year", "iso_week"]].copy().reset_index(drop=True)
+timeline["yw"] = timeline["year"] * 100 + timeline["iso_week"]
 
+sorted_yws  = sorted(timeline["yw"].unique())
+cutoff_yw   = sorted_yws[int(len(sorted_yws) * (1 - TEST_FRAC))]
+train_mask  = (timeline["yw"] <= cutoff_yw).values
+test_mask   = (timeline["yw"] >  cutoff_yw).values
+
+X_train = X_full[train_mask].copy()
+X_test  = X_full[test_mask].copy()
+y_train = y_full[train_mask].copy()
+y_test  = y_full[test_mask].copy()
+
+cutoff_year = cutoff_yw // 100
+cutoff_week = cutoff_yw  % 100
+print(f"Calendar cutoff: year={cutoff_year}, iso_week={cutoff_week}")
 print(f"Train: {X_train.shape}  |  Test: {X_test.shape}")
 print(f"Train class dist: {y_train.value_counts().to_dict()}")
 print(f"Test  class dist: {y_test.value_counts().to_dict()}")
@@ -148,11 +202,52 @@ feature_columns = X_train.columns.tolist()
 print(f"Total features: {len(feature_columns)}")
 
 # ─────────────────────────────────────────────
-# 5. HYPERPARAMETER TUNING
+# 5. HYPERPARAMETER TUNING — PANEL-AWARE CV
 # ─────────────────────────────────────────────
+# CV folds are built from unique (year, iso_week) periods in the training set.
+# Each fold's validation window is strictly later in calendar time than its
+# training window, and the boundary is the same across all districts.
 print("\n" + "=" * 60)
-print("STEP 5 — Hyperparameter Tuning (RandomizedSearchCV + TimeSeriesSplit)")
+print("STEP 5 — Hyperparameter Tuning (Panel-Aware TimeSeriesCV)")
 print("=" * 60)
+
+train_timeline = timeline[train_mask].copy().reset_index(drop=True)
+X_train_r      = X_train.reset_index(drop=True)
+y_train_r      = y_train.reset_index(drop=True)
+
+sorted_train_yws = sorted(train_timeline["yw"].unique())
+n_cv_folds  = 5
+period_step = len(sorted_train_yws) // (n_cv_folds + 1)
+
+cv_splits = []
+for k in range(1, n_cv_folds + 1):
+    val_start_pos = k * period_step
+    val_end_pos   = min(val_start_pos + period_step, len(sorted_train_yws)) - 1
+    if val_start_pos >= len(sorted_train_yws):
+        break
+
+    val_start_yw = sorted_train_yws[val_start_pos]
+    val_end_yw   = sorted_train_yws[val_end_pos]
+
+    tr_mask_cv  = train_timeline["yw"] <  val_start_yw
+    val_mask_cv = (train_timeline["yw"] >= val_start_yw) & \
+                  (train_timeline["yw"] <= val_end_yw)
+
+    tr_idx  = tr_mask_cv[tr_mask_cv].index.tolist()
+    val_idx = val_mask_cv[val_mask_cv].index.tolist()
+
+    if len(tr_idx) < 50 or len(val_idx) == 0:
+        continue
+    if y_train_r.iloc[tr_idx].nunique() < 2 or y_train_r.iloc[val_idx].nunique() < 2:
+        continue
+
+    cv_splits.append((tr_idx, val_idx))
+    print(f"  Fold {k}: train rows={len(tr_idx)}, val rows={len(val_idx)}, "
+          f"val period yw=[{val_start_yw}–{val_end_yw}]")
+
+print(f"Valid panel CV splits: {len(cv_splits)} / {n_cv_folds}")
+if len(cv_splits) == 0:
+    raise RuntimeError("No valid CV splits constructed. Check training set size.")
 
 param_dist = {
     "n_estimators":     [50, 100, 150, 200, 250, 300],
@@ -162,17 +257,7 @@ param_dist = {
     "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
 }
 
-tscv = TimeSeriesSplit(n_splits=5)
-valid_splits = []
-for tr_idx, val_idx in tscv.split(X_train):
-    y_tr_fold  = y_train.iloc[tr_idx]
-    y_val_fold = y_train.iloc[val_idx]
-    if len(y_tr_fold) > 50 and y_tr_fold.nunique() == 2 and y_val_fold.nunique() == 2:
-        valid_splits.append((tr_idx, val_idx))
-print(f"Valid CV splits: {len(valid_splits)} / 5")
-
 base_xgb = XGBClassifier(
-    # enable_categorical intentionally omitted — SHAP incompatible
     tree_method="hist",
     scale_pos_weight=scale_pos_weight,
     random_state=RANDOM_SEED,
@@ -185,44 +270,77 @@ search = RandomizedSearchCV(
     param_distributions=param_dist,
     n_iter=40,
     scoring="roc_auc",
-    cv=tscv,
+    cv=cv_splits,
     random_state=RANDOM_SEED,
     n_jobs=-1,
     verbose=1,
     refit=True,
 )
-search.fit(X_train, y_train)
+search.fit(X_train_r, y_train_r)
 
-best_params    = search.best_params_
-best_cv_score  = search.best_score_
+best_params   = search.best_params_
+best_cv_score = search.best_score_
 print(f"\nBest CV ROC-AUC: {best_cv_score:.4f}")
 print(f"Best params: {best_params}")
 
 # ─────────────────────────────────────────────
-# 6. EVALUATION
+# 6. TRAIN FINAL MODEL & EVALUATE ON TEST SET
 # ─────────────────────────────────────────────
+# Train the final model with best_params on the full training set.
+# Evaluate on the held-out test set. The artifact stores THIS model and THESE
+# metrics — so what is saved is fully internally consistent.
 print("\n" + "=" * 60)
-print("STEP 6 — Evaluation on Test Set")
+print("STEP 6 — Train Final Model + Evaluate on Test Set")
 print("=" * 60)
 
-best_model = search.best_estimator_
-y_proba    = best_model.predict_proba(X_test)[:, 1]
-roc_auc    = roc_auc_score(y_test, y_proba)
-print(f"ROC-AUC: {roc_auc:.4f}")
+final_model = XGBClassifier(
+    **best_params,
+    tree_method="hist",
+    scale_pos_weight=scale_pos_weight,
+    random_state=RANDOM_SEED,
+    eval_metric="logloss",
+    verbosity=0,
+)
+final_model.fit(X_train_r, y_train_r)
 
+y_proba = final_model.predict_proba(X_test)[:, 1]
+roc_auc = roc_auc_score(y_test, y_proba)
+print(f"ROC-AUC (final model, test set): {roc_auc:.4f}")
+
+# ── Threshold selection — recall-first ────────────────────────────────────
+# Among all thresholds that achieve recall ≥ MIN_RECALL_TARGET, pick the one
+# that maximises F1. If no threshold clears the floor (rare edge case on very
+# small test sets), fall back to the threshold that simply maximises recall.
 precisions, recalls, thresholds = precision_recall_curve(y_test, y_proba)
-best_thresh = 0.5
-best_f1     = -1
-best_recall = -1
-for p, r, t in zip(precisions[:-1], recalls[:-1], thresholds):
-    if p > 0.2:
-        f1 = 2 * p * r / (p + r + 1e-9)
-        if f1 > best_f1 or (f1 == best_f1 and r > best_recall):
-            best_f1     = f1
-            best_recall = r
-            best_thresh = t
 
-print(f"Optimal threshold: {best_thresh:.4f}")
+best_thresh  = 0.5
+best_f1      = -1.0
+best_prec_at = 0.0
+best_rec_at  = 0.0
+
+for p, r, t in zip(precisions[:-1], recalls[:-1], thresholds):
+    if r < MIN_RECALL_TARGET:
+        continue
+    if p <= 0:
+        continue
+    f1_cand = 2 * p * r / (p + r + 1e-9)
+    if f1_cand > best_f1:
+        best_f1      = f1_cand
+        best_thresh  = t
+        best_prec_at = p
+        best_rec_at  = r
+
+if best_f1 < 0:
+    print(f"  ⚠  No threshold achieves recall ≥ {MIN_RECALL_TARGET:.0%}. "
+          "Falling back to highest-recall threshold with precision > 0.")
+    for p, r, t in zip(precisions[:-1], recalls[:-1], thresholds):
+        if p > 0 and r > best_rec_at:
+            best_rec_at  = r
+            best_prec_at = p
+            best_thresh  = t
+            best_f1      = 2 * p * r / (p + r + 1e-9)
+
+print(f"Optimal threshold (recall ≥ {MIN_RECALL_TARGET:.0%}): {best_thresh:.4f}")
 y_pred = (y_proba >= best_thresh).astype(int)
 
 prec = precision_score(y_test, y_pred, zero_division=0)
@@ -233,10 +351,13 @@ print(f"  Recall    : {rec:.4f}")
 print(f"  F1        : {f1:.4f}")
 print(f"  ROC-AUC   : {roc_auc:.4f}")
 
+# Precision-Recall curve (annotate the recall floor)
 fig, ax = plt.subplots(figsize=(7, 5))
 ax.plot(recalls[:-1], precisions[:-1], color="#2563eb", lw=2, label="PR Curve")
-ax.scatter([best_recall], [prec], color="#dc2626", zorder=5, s=80,
-           label=f"Threshold={best_thresh:.2f}\nF1={best_f1:.3f}")
+ax.axvline(MIN_RECALL_TARGET, color="#f59e0b", lw=1.2, ls="--",
+           label=f"Recall floor ({MIN_RECALL_TARGET:.0%})")
+ax.scatter([rec], [prec], color="#dc2626", zorder=5, s=80,
+           label=f"Threshold={best_thresh:.2f}  F1={f1:.3f}")
 ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
 ax.set_title("EpiSentinel — Precision-Recall Curve")
 ax.legend(); ax.grid(alpha=0.3)
@@ -274,9 +395,10 @@ print(f"  EpiSentinel      → F1={f1:.4f}  AUC={roc_auc:.4f}  ΔF1=+{f1-b_f1:.4
 print("\n" + "=" * 60)
 print("STEP 8 — Feature Importance (Top 10)")
 print("=" * 60)
-feat_imp = pd.Series(best_model.feature_importances_,
+feat_imp = pd.Series(final_model.feature_importances_,
                      index=feature_columns).sort_values(ascending=False)
 print(feat_imp.head(10).to_string())
+
 LAG_WEATHER_KW = ["lag", "roll", "temperature", "humidity", "rainfall"]
 lw_present = [f for f in feat_imp.head(10).index
               if any(kw in f for kw in LAG_WEATHER_KW)]
@@ -285,34 +407,24 @@ if not lw_present:
     print("  ⚠  No lag/weather features in top-10. Review feature engineering.")
 
 # ─────────────────────────────────────────────
-# 9. RETRAIN FINAL MODEL & SAVE
+# 9. SAVE ARTIFACT
 # ─────────────────────────────────────────────
+# Model and metrics are consistent: both come from final_model evaluated on X_test.
 print("\n" + "=" * 60)
-print("STEP 9 — Retrain Final Model on Full Training Data")
+print("STEP 9 — Save Artifact")
 print("=" * 60)
 
-final_model = XGBClassifier(
-    **best_params,
-    tree_method="hist",
-    scale_pos_weight=scale_pos_weight,
-    random_state=RANDOM_SEED,
-    eval_metric="logloss",
-    verbosity=0,
-)
-final_model.fit(X_train, y_train)
-
 artifact = {
-    "model":              final_model,
-    "district_map":       district_map,       # str → int, needed at inference
-    "feature_columns":    feature_columns,
-    "optimal_threshold":  float(best_thresh),
-    "scale_pos_weight":   float(scale_pos_weight),
-    "best_params":        best_params,
+    "model":             final_model,
+    "feature_columns":   feature_columns,
+    "optimal_threshold": float(best_thresh),
+    "scale_pos_weight":  float(scale_pos_weight),
+    "best_params":       best_params,
     "metrics": {
-        "roc_auc":    float(roc_auc),
-        "precision":  float(prec),
-        "recall":     float(rec),
-        "f1":         float(f1),
+        "roc_auc":   float(roc_auc),
+        "precision": float(prec),
+        "recall":    float(rec),
+        "f1":        float(f1),
     },
 }
 
@@ -328,4 +440,5 @@ with open(FEATURES_OUT, "w") as f:
 print(f"Feature columns saved → {FEATURES_OUT}")
 
 print("\n✅ EpiSentinel pipeline complete.")
-print(f"   Final Test → Precision={prec:.4f} | Recall={rec:.4f} | F1={f1:.4f} | ROC-AUC={roc_auc:.4f}")
+print(f"   Final Model on Test Set → "
+      f"Precision={prec:.4f} | Recall={rec:.4f} | F1={f1:.4f} | ROC-AUC={roc_auc:.4f}")
