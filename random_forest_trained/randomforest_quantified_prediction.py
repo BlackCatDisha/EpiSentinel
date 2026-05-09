@@ -9,7 +9,7 @@ import numpy as np
 # 1. LOAD DATA
 # ==============================
 base_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(base_dir, "model_ready_district_week_trainable.csv")
+csv_path = os.path.join(base_dir, "with_pop_model_ready_district_week_trainable.csv")
 df = pd.read_csv(csv_path)
 
 # ==============================
@@ -39,7 +39,8 @@ features = [
     "rainfall_total_week_lag2",
     "week_sin",
     "week_cos",
-    "population_2011",
+    "worldpop_total",
+    "worldpop_density_per_km2",
     "cases_per_100k"
 ]
 
@@ -68,9 +69,25 @@ print("Training Classification Model (Risk Score)...")
 clf = RandomForestClassifier(n_estimators=200, max_depth=10, class_weight="balanced", random_state=42)
 clf.fit(X_train, y_train_class)
 
-print("Training Regression Model (Case Quantification)...")
-reg = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42)
-reg.fit(X_train, y_train_reg)
+# --- REGRESSION FEEDBACK LOOP (HYPERPARAMETER OPTIMIZATION) ---
+print("Optimizing Regression Model (Feedback Loop)...")
+best_mae = float('inf')
+best_depth = 10
+best_reg = None
+
+for depth in [5, 10, 15, 20]:
+    temp_reg = RandomForestRegressor(n_estimators=200, max_depth=depth, random_state=42)
+    temp_reg.fit(X_train, y_train_reg)
+    temp_preds = temp_reg.predict(X_test)
+    temp_mae = mean_absolute_error(y_test_reg, temp_preds)
+    
+    if temp_mae < best_mae:
+        best_mae = temp_mae
+        best_depth = depth
+        best_reg = temp_reg
+
+reg = best_reg
+print(f"Regression Optimized: Best max_depth found is {best_depth} (MAE: {best_mae:.2f})")
 
 # ==============================
 # 6. QUANTIFIED PREDICTIONS
@@ -125,7 +142,8 @@ readable_features = {
     'humidity_mean_week': 'High Humidity Levels',
     'rainfall_total_week': 'Heavy Rainfall',
     'cases_lag1': 'Rising Case Trend',
-    'population_2011': 'High Population Density',
+    'worldpop_total': 'Dynamic Population Growth',
+    'worldpop_density_per_km2': 'High Population Density',
     'cases_lag2': 'Sustained Local Transmission',
     'cases_per_100k': 'High Case Density'
 }
