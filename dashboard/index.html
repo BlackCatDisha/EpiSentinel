@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body class="dark-theme">
     <div class="app-container">
         <!-- Sidebar -->
@@ -22,21 +24,21 @@
                     <i data-lucide="chevron-right"></i>
                 </button>
             </div>
-            <nav>
+            <nav> <!--for sidebar   -->
                 <a href="#" class="nav-item active" title="Dashboard">
-                    <i data-lucide="layout-dashboard"></i> 
+                    <i data-lucide="layout-dashboard"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
                 <a href="#" class="nav-item" title="Analytics">
-                    <i data-lucide="bar-chart-3"></i> 
+                    <i data-lucide="bar-chart-3"></i>
                     <span class="nav-text">Analytics</span>
                 </a>
                 <a href="#" class="nav-item" title="Districts">
-                    <i data-lucide="map"></i> 
+                    <i data-lucide="map"></i>
                     <span class="nav-text">Districts</span>
                 </a>
                 <a href="#" class="nav-item" title="Alerts">
-                    <i data-lucide="bell"></i> 
+                    <i data-lucide="bell"></i>
                     <span class="nav-text">Alerts</span>
                 </a>
             </nav>
@@ -102,19 +104,25 @@
                 <!-- Map Container -->
                 <div class="card map-container">
                     <div class="card-header">
-                        <h3>Karnataka District Analysis</h3>
+                        <div class="title-with-back">
+                            <button id="back-to-india" class="btn-back hidden" title="Back to India">
+                                <i data-lucide="arrow-left"></i>
+                            </button>
+                            <h3 id="map-title">India Overview</h3>
+                        </div>
                         <div class="map-controls">
                             <span class="legend-item"><span class="color low"></span> Low</span>
                             <span class="legend-item"><span class="color medium"></span> Med</span>
                             <span class="legend-item"><span class="color high"></span> High</span>
                         </div>
                     </div>
-                    <div id="karnataka-map">
-                        <!-- SVG Map will be rendered here -->
+                    <div id="map-canvas">
+                        <!-- SVG(scalable vector graphs) Map will be rendered here -->
                         <div id="map-loader" class="loader"></div>
                         <div id="map-error" class="error-message hidden">
                             <i data-lucide="alert-circle"></i>
-                            <p>Failed to load the map. This is usually due to CORS restrictions when opening the file directly. Please run a local server as described in the walkthrough.</p>
+                            <p>Failed to load the map. This is usually due to CORS restrictions when opening the file
+                                directly. Please run a local server as described in the walkthrough.</p>
                         </div>
                     </div>
                 </div>
@@ -158,4 +166,5 @@
         lucide.createIcons();
     </script>
 </body>
+
 </html>

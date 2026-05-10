@@ -1,0 +1,52 @@
+# India-Wide Dashboard with State-to-District Navigation
+
+Transition the current Karnataka-specific dashboard to a national view that allows users to drill down from an India state-wise heatmap to individual state district-wise maps.
+
+## Proposed Changes
+
+### [Component: Dashboard Data]
+
+#### [MODIFY] [data.js](file:///c:/Users/gndis/Desktop/RVCE/hackathons%20and%20stuff/episentinel/EpiSentinel/dashboard/data.js)
+- Add `stateData` object containing risk scores and predicted cases for all Indian states.
+- Karnataka will have aggregated data from `districtData`.
+- Other states will have randomized dummy data.
+- Add a helper function to generate dummy district data for other states on the fly.
+
+### [Component: Dashboard UI]
+
+#### [MODIFY] [index.html](file:///c:/Users/gndis/Desktop/RVCE/hackathons%20and%20stuff/episentinel/EpiSentinel/dashboard/index.html)
+- Add a "Back to India" button (initially hidden) in the map header.
+- Update the card header to dynamically show the current location (e.g., "India Overview" or "Karnataka Analysis").
+- Add breadcrumbs or a navigation indicator.
+
+#### [MODIFY] [style.css](file:///c:/Users/gndis/Desktop/RVCE/hackathons%20and%20stuff/episentinel/EpiSentinel/dashboard/style.css)
+- Add styles for the "Back" button and breadcrumbs.
+- Ensure the map container handles transitions smoothly.
+
+### [Component: Map Logic]
+
+#### [MODIFY] [app.js](file:///c:/Users/gndis/Desktop/RVCE/hackathons%20and%20stuff/episentinel/EpiSentinel/dashboard/app.js)
+- Implement state management for the view (`currentView`: 'india' | 'state').
+- Add `INDIA_GEOJSON_URL`.
+- Update `initDashboard` to start with the India view.
+- Create `renderIndiaMap()` to handle the national level.
+- Update `renderMap()` (to be renamed `renderDistrictMap()`) to handle any state's district-wise map.
+- Implement click handlers to switch between views:
+  - India Map -> Click State -> Load State District Map.
+  - "Back to India" -> Load India Map.
+- Update `updateGlobalStats()` to reflect the current view's data.
+
+## Verification Plan
+
+### Manual Verification
+- Load the dashboard and verify the India heatmap is displayed.
+- Hover over various states to see dummy data (risk/cases).
+- Hover over Karnataka to see real aggregated data.
+- Click Karnataka and verify it transitions to the district-wise map.
+- Click a district in Karnataka to verify the modal still works.
+- Click "Back to India" and verify it returns to the national view.
+- Click another state (e.g., Maharashtra) and verify it shows a district-wise map with dummy data (if URLs are available).
+
+## Open Questions
+- Do we have a reliable source for all state district GeoJSONs? I will attempt to use the `inosaint/StatesOfIndia` repository pattern.
+- If a state's district GeoJSON is unavailable, should we show a fallback message or just prevent clicking?
