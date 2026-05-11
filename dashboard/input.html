@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpiSentinel | Data Input</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --sidebar-bg: #1e293b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary-red: #ef4444;
+            --secondary-red: #991b1b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 80px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(239,68,68,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(239,68,68,0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none; z-index: 0;
+        }
+
+        /* ── SHELL ── */
+        .app-container {
+            display: flex; min-height: 100vh; width: 100%;
+            position: relative; z-index: 1;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            padding: 2rem 1.5rem;
+            position: sticky; top: 0; height: 100vh;
+            transition: var(--transition);
+            z-index: 1000; flex-shrink: 0; overflow: hidden;
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); padding: 2rem 0.5rem; }
+        .sidebar-header { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; margin-bottom: 3rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; font-weight: 800; color: var(--primary-red); white-space: nowrap; }
+        .sidebar.collapsed .logo { justify-content: center; }
+        .logo-text { transition: var(--transition); }
+        .sidebar.collapsed .logo-text { display: none; }
+        .sidebar-toggle {
+            background: var(--primary-red); border: none; color: white;
+            width: 32px; height: 32px; border-radius: 0.5rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: var(--transition); flex-shrink: 0;
+        }
+        .sidebar.collapsed .sidebar-toggle { transform: rotate(0deg); }
+        .sidebar:not(.collapsed) .sidebar-toggle { transform: rotate(180deg); }
+        .sidebar-toggle:hover { background: #ff5555; }
+        nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.8rem 1rem; text-decoration: none;
+            color: var(--text-muted); border-radius: 0.75rem;
+            transition: var(--transition); white-space: nowrap;
+        }
+        .sidebar.collapsed .nav-item { justify-content: center; padding: 0.8rem 0; }
+        .nav-item i { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-text { transition: var(--transition); }
+        .sidebar.collapsed .nav-text { display: none; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
+        .nav-item.active { color: var(--primary-red); background-color: rgba(239,68,68,0.1); }
+        .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--glass-border); }
+        .user-profile { display: flex; align-items: center; gap: 0.75rem; padding: 0 0.5rem; }
+        .user-info { transition: var(--transition); overflow: hidden; }
+        .sidebar.collapsed .user-info { opacity: 0; pointer-events: none; width: 0; }
+        .user-profile img { width: 36px; height: 36px; border-radius: 50%; background: #334155; flex-shrink: 0; }
+        .user-info .name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .user-info .role { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+
+        /* ── MAIN ── */
+        .main-content {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 1.75rem;
+            display: flex; flex-direction: column; gap: 1.25rem;
+            overflow-x: hidden;
+        }
+
+        /* ── HEADER ── */
+        .top-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .top-header h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+        .top-header h1 span { color: var(--primary-red); }
+        .header-sub { color: var(--text-muted); font-size: 0.78rem; margin-top: 0.25rem; font-family: 'JetBrains Mono', monospace; }
+        .date-chip {
+            font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+            background: var(--sidebar-bg); padding: 0.32rem 0.8rem;
+            border-radius: 0.5rem; border: 1px solid var(--glass-border); white-space: nowrap;
+        }
+
+        /* ── PIPELINE ── */
+        .pipeline {
+            display: flex; align-items: center;
+            background: var(--card-bg); border: 1px solid var(--glass-border);
+            border-radius: 0.875rem; padding: 0.9rem 1.25rem;
+            backdrop-filter: blur(12px); flex-shrink: 0;
+        }
+        .pipeline-step { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+        .step-divider { width: 24px; height: 1px; background: var(--glass-border); flex-shrink: 0; margin: 0 0.2rem; }
+        .step-num {
+            width: 25px; height: 25px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.68rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0; transition: var(--transition);
+        }
+        .step-num.pending { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--glass-border); }
+        .step-num.active { background: var(--primary-red); color: white; box-shadow: 0 0 10px rgba(239,68,68,0.4); }
+        .step-num.done { background: rgba(34,197,94,0.15); color: var(--accent-green); border: 1px solid rgba(34,197,94,0.3); }
+        .step-label { font-size: 0.76rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .step-label.active-label { color: var(--text-main); font-weight: 600; }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--card-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 0.875rem;
+            display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+        }
+        .card-header {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0; gap: 0.5rem;
+        }
+        .card-header h3 { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; white-space: nowrap; }
+        .card-body { padding: 1.25rem; }
+
+        /* ── WORKSPACE ── */
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.25rem;
+            align-items: start;
+            min-width: 0;
+        }
+
+        /* ── LEFT PANEL ── */
+        .left-panel { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+
+        /* Upload */
+        .upload-zone {
+            border: 2px dashed var(--glass-border); border-radius: 0.75rem;
+            padding: 1.75rem 1rem; text-align: center; cursor: pointer;
+            transition: var(--transition); position: relative; overflow: hidden;
+        }
+        .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary-red); background: rgba(239,68,68,0.08); }
+        .upload-zone.dragover { transform: scale(1.01); }
+        .upload-zone.has-file { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); border-style: solid; }
+        .upload-zone.scanning::after {
+            content: ''; position: absolute; left: 0; top: -5%; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-red), transparent);
+            animation: scan 1.4s ease-in-out infinite;
+        }
+        @keyframes scan { 0%{top:-5%} 100%{top:105%} }
+        .upload-icon { width: 40px; height: 40px; margin: 0 auto 0.65rem; color: var(--text-muted); transition: var(--transition); }
+        .upload-zone:hover .upload-icon, .upload-zone.dragover .upload-icon { color: var(--primary-red); }
+        .upload-zone.has-file .upload-icon { color: var(--accent-green); }
+        .upload-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .upload-sub { font-size: 0.73rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5; }
+        .upload-sub span { color: var(--primary-red); }
+        #file-input { display: none; }
+
+        .file-info {
+            display: none; align-items: center; gap: 0.55rem;
+            margin-top: 0.8rem; padding: 0.6rem 0.875rem;
+            background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 0.5rem; min-width: 0;
+        }
+        .file-info.visible { display: flex; }
+        .file-info-name {
+            font-size: 0.75rem; font-weight: 600; color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+            flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .file-info-size { font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+        .file-clear { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0; display: flex; flex-shrink: 0; }
+        .file-clear:hover { color: var(--primary-red); }
+
+        /* Run Button */
+        .run-btn {
+            width: 100%; padding: 0.8rem 1rem;
+            background: var(--primary-red); border: none; border-radius: 0.75rem;
+            color: white; font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 0.5rem; transition: var(--transition); position: relative; overflow: hidden;
+        }
+        .run-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,0.1),transparent); opacity: 0; transition: var(--transition); }
+        .run-btn:hover:not(:disabled)::before { opacity: 1; }
+        .run-btn:hover:not(:disabled) { background: #dc2626; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(239,68,68,0.3); }
+        .run-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; box-shadow: none; }
+        .run-btn.running { background: var(--accent-yellow); color: #0f172a; }
+        .run-btn.done-btn { background: #16a34a; }
+        .btn-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.25); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; flex-shrink: 0; }
+        .run-btn.running .btn-spinner { display: block; }
+        .run-btn.running .btn-icon { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+
+        /* ── DATA PREVIEW TABLE ── */
+        /* The wrapper is the scroll container — both axes */
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 230px;
+            position: relative;
+            /* thin scrollbars */
+        }
+        .table-wrapper::-webkit-scrollbar { width: 5px; height: 5px; }
+        .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); }
+        .table-wrapper::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 99px; }
+        .table-wrapper::-webkit-scrollbar-corner { background: transparent; }
+
+        .data-table {
+            /* do NOT set width:100% — we want it to expand naturally for horizontal scroll */
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.74rem;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;  /* all cells stay on one line */
+        }
+
+        /* Sticky header — must use solid background so rows don't show through */
+        .data-table thead { position: sticky; top: 0; z-index: 3; }
+        .data-table th {
+            background: #182035;
+            color: var(--primary-red);
+            text-transform: uppercase; letter-spacing: 0.055em;
+            padding: 0.5rem 1rem;
+            text-align: left; font-size: 0.66rem; font-weight: 700;
+            border-bottom: 2px solid rgba(239,68,68,0.25);
+            /* left border for first sticky col look */
+        }
+        .data-table td {
+            padding: 0.45rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            vertical-align: middle;
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:hover td { background: rgba(255,255,255,0.03); color: var(--text-main); }
+        .row-num { color: rgba(255,255,255,0.2) !important; font-size: 0.62rem; user-select: none; width: 2rem; }
+
+        .empty-preview {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 2.5rem 1rem; color: var(--text-muted); gap: 0.6rem; text-align: center;
+        }
+        .empty-preview i { width: 30px; height: 30px; opacity: 0.22; }
+        .empty-preview p { font-size: 0.8rem; line-height: 1.55; max-width: 260px; }
+
+        .csv-stats {
+            display: none; flex-wrap: wrap; gap: 0.875rem;
+            padding: 0.55rem 1.25rem;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .csv-stats.visible { display: flex; }
+        .csv-stat { font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); white-space: nowrap; }
+        .csv-stat strong { color: var(--text-main); }
+
+        /* ── MAP + CHAT ROW ── */
+        .map-chat-row {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 1.25rem;
+            min-width: 0;
+        }
+
+        /* ── MAP CARD ── */
+        .map-card { min-height: 420px; display: flex; flex-direction: column; }
+        #result-map-canvas {
+            flex: 1 1 auto; min-height: 310px; width: 100%;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .map-placeholder {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 0.7rem; color: var(--text-muted); text-align: center; padding: 2rem; width: 100%;
+        }
+        .map-placeholder .placeholder-icon { width: 44px; height: 44px; opacity: 0.18; }
+        .map-placeholder p { font-size: 0.8rem; max-width: 210px; line-height: 1.55; }
+        .map-placeholder .hint-chip {
+            font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+            padding: 0.28rem 0.7rem; border-radius: 99px;
+        }
+        .map-controls { display: flex; gap: 0.6rem; font-size: 0.75rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+        .color-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+        .color-dot.low { background: #22c55e; }
+        .color-dot.medium { background: #eab308; }
+        .color-dot.high { background: #ef4444; }
+
+        .result-stats {
+            display: none; gap: 0; flex-wrap: wrap;
+            border-top: 1px solid var(--glass-border); flex-shrink: 0;
+        }
+        .result-stats.visible { display: flex; }
+        .r-stat { flex: 1; min-width: 70px; text-align: center; padding: 0.65rem 0.5rem; }
+        .r-stat + .r-stat { border-left: 1px solid var(--glass-border); }
+        .r-stat .r-val { font-size: 1.2rem; font-weight: 800; }
+        .r-stat .r-label { font-size: 0.62rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 0.1rem; }
+        .r-stat.red .r-val { color: var(--primary-red); }
+        .r-stat.yellow .r-val { color: var(--accent-yellow); }
+        .r-stat.green .r-val { color: var(--accent-green); }
+
+        .result-loader { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2.5rem; width: 100%; }
+        .result-loader.visible { display: flex; }
+        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.06); border-top-color: var(--primary-red); border-radius: 50%; animation: spin 0.9s linear infinite; }
+        .loader-text { font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+        .loader-text span { color: var(--primary-red); animation: blink 1.2s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+        /* ── CHATBOT ── */
+        .chatbot-card { min-height: 420px; display: flex; flex-direction: column; }
+        .chat-status { font-size: 0.7rem; color: var(--accent-green); display: flex; align-items: center; gap: 0.35rem; }
+        .chat-status::before { content: ''; width: 7px; height: 7px; background: var(--accent-green); border-radius: 50%; flex-shrink: 0; }
+        .chat-messages {
+            flex: 1 1 0; overflow-y: auto; padding: 1rem;
+            display: flex; flex-direction: column; gap: 0.6rem; min-height: 0;
+        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+        .message { max-width: 90%; padding: 0.55rem 0.8rem; border-radius: 0.75rem; font-size: 0.8rem; line-height: 1.45; }
+        .message.system { align-self: flex-start; background: rgba(255,255,255,0.05); border-bottom-left-radius: 0.15rem; }
+        .message.user { align-self: flex-end; background: var(--primary-red); color: white; border-bottom-right-radius: 0.15rem; }
+        .chat-input-area { padding: 0.8rem 1rem; border-top: 1px solid var(--glass-border); display: flex; gap: 0.55rem; flex-shrink: 0; }
+        #chat-input {
+            flex: 1; min-width: 0;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            border-radius: 0.5rem; padding: 0.55rem 0.8rem;
+            color: var(--text-main); font-family: 'Syne', sans-serif; font-size: 0.8rem;
+            outline: none; transition: var(--transition);
+        }
+        #chat-input:focus { border-color: var(--primary-red); }
+        #send-btn {
+            background: var(--primary-red); color: white; border: none;
+            width: 34px; height: 34px; border-radius: 0.5rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: var(--transition); flex-shrink: 0;
+        }
+        #send-btn:hover { background: var(--secondary-red); }
+
+        /* ── TOOLTIP ── */
+        .tooltip {
+            position: fixed;
+            background: rgba(15,23,42,0.97); border: 1px solid var(--glass-border);
+            padding: 0.6rem 0.875rem; border-radius: 0.5rem;
+            pointer-events: none; z-index: 9999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            min-width: 160px; max-width: 230px;
+            backdrop-filter: blur(8px); font-size: 0.78rem;
+        }
+        .tooltip.hidden { display: none; }
+
+        /* ── MODAL ── */
+        .modal {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000; padding: 1.5rem;
+        }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal-content {
+            background: var(--sidebar-bg); padding: 2rem;
+            border-radius: 1.25rem; border: 1px solid var(--glass-border);
+            width: 100%; max-width: 660px; position: relative;
+            animation: modalUp 0.22s ease-out;
+            max-height: 88vh; overflow-y: auto;
+        }
+        @keyframes modalUp { from{transform:translateY(22px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .close-modal {
+            position: absolute; top: 1rem; right: 1.25rem;
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.7rem; cursor: pointer; transition: var(--transition); line-height: 1;
+        }
+        .close-modal:hover { color: var(--primary-red); }
+        .district-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+        .district-header h2 { font-size: 1.5rem; color: var(--primary-red); font-weight: 800; }
+        .district-stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 1.25rem; }
+        .stat-item .label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.3rem; font-family: 'JetBrains Mono', monospace; }
+        .stat-item .value { font-size: 1.25rem; font-weight: 700; }
+        .stat-item .trend { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.12rem; }
+        .explanation-box { margin-top: 1.25rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.08); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1280px) {
+            .workspace { grid-template-columns: 290px 1fr; }
+            .map-chat-row { grid-template-columns: 1.35fr 1fr; }
+        }
+        @media (max-width: 1040px) {
+            .workspace { grid-template-columns: 1fr; }
+            .map-chat-row { grid-template-columns: 1fr; }
+            .chatbot-card, .map-card { min-height: 360px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -100%; z-index: 2000; }
+            .main-content { padding: 1rem; }
+            .step-label { display: none; }
+            .top-header h1 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar collapsed" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i data-lucide="shield-check"></i>
+                <span class="logo-text">EpiSentinel</span>
+            </div>
+            <button id="sidebar-toggle" class="sidebar-toggle">
+                <i data-lucide="chevron-right"></i>
+            </button>
+        </div>
+        <nav>
+            <a href="index.html" class="nav-item" title="Dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="input.html" class="nav-item active" title="Data Input">
+                <i data-lucide="upload-cloud"></i>
+                <span class="nav-text">Data Input</span>
+            </a>
+            <a href="#" class="nav-item" title="Analytics">
+                <i data-lucide="bar-chart-3"></i>
+                <span class="nav-text">Analytics</span>
+            </a>
+            <a href="#" class="nav-item" title="Districts">
+                <i data-lucide="map"></i>
+                <span class="nav-text">Districts</span>
+            </a>
+            <a href="#" class="nav-item" title="Alerts">
+                <i data-lucide="bell"></i>
+                <span class="nav-text">Alerts</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sentinel" alt="User">
+                <div class="user-info">
+                    <p class="name">Dr. Sentinel</p>
+                    <p class="role">Epidemiologist</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- HEADER -->
+        <header class="top-header">
+            <div>
+                <h1>Data <span>Input</span> &amp; Prediction</h1>
+                <p class="header-sub">Upload epidemiological CSV → run ML prediction → visualize on map</p>
+            </div>
+            <span class="date-chip">May 2026</span>
+        </header>
+
+        <!-- PIPELINE -->
+        <div class="pipeline">
+            <div class="pipeline-step">
+                <div class="step-num active" id="step1-num">01</div>
+                <span class="step-label active-label" id="step1-label">Upload CSV</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="pipeline-step">
+                <div class="step-num pending" id="step2-num">02</div>
+                <span class="step-label" id="step2-label">Preview &amp; Validate</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="pipeline-step">
+                <div class="step-num pending" id="step3-num">03</div>
+                <span class="step-label" id="step3-label">Run Predictions</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="pipeline-step">
+                <div class="step-num pending" id="step4-num">04</div>
+                <span class="step-label" id="step4-label">Explore Results</span>
+            </div>
+        </div>
+
+        <!-- WORKSPACE -->
+        <div class="workspace">
+
+            <!-- LEFT: upload + run button -->
+            <div class="left-panel">
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="file-up" style="width:14px;height:14px;"></i>&nbsp;CSV Upload</h3>
+                        <span style="font-size:0.68rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">.csv only</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="upload-zone">
+                            <div class="upload-icon">
+                                <i data-lucide="upload-cloud" style="width:40px;height:40px;"></i>
+                            </div>
+                            <p class="upload-title">Drop your CSV here</p>
+                            <p class="upload-sub">or <span>click to browse</span></p>
+                            <p class="upload-sub" style="margin-top:0.3rem;">district/state · population · rainfall · cases…</p>
+                        </div>
+                        <input type="file" id="file-input" accept=".csv">
+                        <div class="file-info" id="file-info">
+                            <i data-lucide="file-text" style="width:15px;height:15px;color:var(--accent-green);flex-shrink:0;"></i>
+                            <span class="file-info-name" id="file-name">—</span>
+                            <span class="file-info-size" id="file-size">—</span>
+                            <button class="file-clear" id="file-clear" title="Remove file">
+                                <i data-lucide="x" style="width:13px;height:13px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="run-btn" id="run-btn" disabled>
+                    <i data-lucide="zap" class="btn-icon" style="width:16px;height:16px;"></i>
+                    <div class="btn-spinner"></div>
+                    <span id="run-btn-text">Run Predictions</span>
+                </button>
+
+            </div>
+
+            <!-- RIGHT: preview table + map+chat row -->
+            <div class="right-panel">
+
+                <!-- Data Preview -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="table" style="width:14px;height:14px;"></i>&nbsp;Data Preview</h3>
+                        <span id="preview-badge" style="font-size:0.68rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">no file loaded</span>
+                    </div>
+                    <div class="table-wrapper" id="table-wrapper">
+                        <div class="empty-preview" id="empty-preview">
+                            <i data-lucide="inbox"></i>
+                            <p>Upload a CSV file to preview its contents before running predictions.</p>
+                        </div>
+                        <table class="data-table" id="data-table" style="display:none;">
+                            <thead id="table-head"></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="csv-stats" id="csv-stats">
+                        <span class="csv-stat"><strong id="stat-rows">0</strong> rows</span>
+                        <span class="csv-stat"><strong id="stat-cols">0</strong> columns</span>
+                        <span class="csv-stat">Region col: <strong id="stat-region-col">—</strong></span>
+                        <span class="csv-stat">Status: <strong style="color:var(--accent-green);">Valid ✓</strong></span>
+                    </div>
+                </div>
+
+                <!-- MAP + CHAT side by side -->
+                <div class="map-chat-row">
+
+                    <div class="card map-card">
+                        <div class="card-header">
+                            <h3><i data-lucide="map" style="width:14px;height:14px;"></i>&nbsp;Prediction Map</h3>
+                            <div class="map-controls">
+                                <span class="legend-item"><span class="color-dot low"></span>Low</span>
+                                <span class="legend-item"><span class="color-dot medium"></span>Med</span>
+                                <span class="legend-item"><span class="color-dot high"></span>High</span>
+                            </div>
+                        </div>
+                        <div id="result-map-canvas">
+                            <div class="map-placeholder" id="map-placeholder">
+                                <i data-lucide="map-pin" class="placeholder-icon"></i>
+                                <p>Prediction results will appear as a choropleth map after running the model.</p>
+                                <span class="hint-chip">← upload CSV &amp; click Run</span>
+                            </div>
+                            <div class="result-loader" id="result-loader">
+                                <div class="loader-ring"></div>
+                                <p class="loader-text">Running model<span>...</span></p>
+                            </div>
+                        </div>
+                        <div class="result-stats" id="result-stats">
+                            <div class="r-stat red"><div class="r-val" id="res-total">—</div><div class="r-label">Total Cases</div></div>
+                            <div class="r-stat yellow"><div class="r-val" id="res-avg-risk">—</div><div class="r-label">Avg Risk</div></div>
+                            <div class="r-stat red"><div class="r-val" id="res-high">—</div><div class="r-label">High Risk</div></div>
+                            <div class="r-stat green"><div class="r-val" id="res-low">—</div><div class="r-label">Low Risk</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card chatbot-card">
+                        <div class="card-header">
+                            <h3><i data-lucide="message-square" style="width:14px;height:14px;"></i>&nbsp;Sentinel AI</h3>
+                            <div class="chat-status">Online</div>
+                        </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message system">
+                                <p>Hello! I'm Sentinel AI. Upload a CSV and run predictions — I'll help you interpret the results.</p>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" placeholder="Ask about results, risk scores…" id="chat-input">
+                            <button id="send-btn"><i data-lucide="send" style="width:14px;height:14px;"></i></button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal -->
+<div id="district-modal" class="modal hidden">
+    <div class="modal-content">
+        <button class="close-modal" id="close-modal">&times;</button>
+        <div id="district-info"></div>
+    </div>
+</div>
+
+<div id="tooltip" class="tooltip hidden"></div>
+
+<script>
+// =============================================================================
+// EPISENTINEL — DATA INPUT PAGE
+// =============================================================================
+// BACKEND INTEGRATION GUIDE (for your FastAPI friend):
+//
+//  1. The frontend calls runPredictions() when user clicks "Run Predictions".
+//     Currently it calls runMockPredictions() which generates dummy data.
+//     Replace that call with callBackendAPI() once the backend is ready.
+//
+//  2. callBackendAPI() POSTs the raw CSV file to your FastAPI endpoint.
+//     Expected endpoint:  POST /predict
+//     Request body:       multipart/form-data  →  field name: "file"  (.csv)
+//     Expected response:  JSON in one of two formats:
+//
+//       Format A (preferred):
+//       { "predictions": { "Karnataka": { "predicted_cases": 12, "risk_score": 74.3,
+//                          "status": "Critical", "top_driver": "Rainfall Anomaly",
+//                          "detailed_explanation": "..." }, ... } }
+//
+//       Format B (flat array):
+//       [ { "region": "Karnataka", "predicted_cases": 12, "risk_score": 74.3,
+//           "status": "Critical", "top_driver": "...", "detailed_explanation": "..." }, ... ]
+//
+//  3. To switch to live backend: replace `runMockPredictions()` in runPredictions()
+//     with `callBackendAPI()`. The rest of the frontend wires up automatically.
+//
+//  4. The API base URL is set in API_BASE_URL below.
+// =============================================================================
+
+const INDIA_GEOJSON_URL = 'https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson';
+const API_BASE_URL = 'http://localhost:8000'; // ← change this to your backend URL
+
+
+
+// ── App state — single source of truth ────────────────────────────────────────
+let parsedCSV        = null;  // { headers: string[], rows: object[] }
+let predictionResults = null; // { "NormalisedName": { predicted_cases, risk_score, status, top_driver, detailed_explanation } }
+let indiaGeoJSON     = null;  // cached so we don't re-fetch on every run
+let resizeHandler    = null;
+
+// =============================================================================
+// INIT
+// =============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    initSidebar();
+    initUpload();
+    initRunButton();
+    initChatbot();
+    initModal();
+});
+
+// =============================================================================
+// SIDEBAR
+// =============================================================================
+function initSidebar() {
+    const sidebar   = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    if (sidebar && toggleBtn) {
+        toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+    }
+}
+
+// =============================================================================
+// FILE UPLOAD & CSV PARSING
+// =============================================================================
+function initUpload() {
+    const zone     = document.getElementById('upload-zone');
+    const input    = document.getElementById('file-input');
+    const clearBtn = document.getElementById('file-clear');
+
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f && f.name.toLowerCase().endsWith('.csv')) loadFile(f);
+    });
+    input.addEventListener('change', () => { if (input.files[0]) loadFile(input.files[0]); });
+    clearBtn.addEventListener('click', clearFile);
+}
+
+function loadFile(file) {
+    const zone = document.getElementById('upload-zone');
+    zone.classList.add('has-file', 'scanning');
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatBytes(file.size);
+    document.getElementById('file-info').classList.add('visible');
+    lucide.createIcons();
+    const reader = new FileReader();
+    reader.onload = e => {
+        zone.classList.remove('scanning');
+        parsedCSV = parseCSV(e.target.result);
+        renderPreview(parsedCSV);
+        setStep(2);
+        document.getElementById('run-btn').disabled = false;
+        lucide.createIcons();
+    };
+    reader.readAsText(file);
+}
+
+function clearFile() {
+    parsedCSV = null;
+    predictionResults = null;
+    const zone = document.getElementById('upload-zone');
+    zone.classList.remove('has-file', 'scanning');
+    document.getElementById('file-info').classList.remove('visible');
+    document.getElementById('file-input').value = '';
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    btn.classList.remove('done-btn', 'running');
+    document.getElementById('run-btn-text').textContent = 'Run Predictions';
+    document.getElementById('empty-preview').style.display = '';
+    document.getElementById('data-table').style.display = 'none';
+    document.getElementById('csv-stats').classList.remove('visible');
+    document.getElementById('preview-badge').textContent = 'no file loaded';
+    document.getElementById('map-placeholder').style.display = '';
+    document.getElementById('result-loader').classList.remove('visible');
+    document.getElementById('result-stats').classList.remove('visible');
+    d3.select('#result-map-canvas svg').remove();
+    setStep(1);
+    lucide.createIcons();
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) return null;
+    const headers = parseCSVLine(lines[0]);
+    const rows = lines.slice(1).map(line => {
+        const vals = parseCSVLine(line);
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+        return obj;
+    });
+    return { headers, rows };
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let cur = '', inQuotes = false;
+    for (const ch of line) {
+        if (ch === '"')            { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { result.push(cur.trim()); cur = ''; }
+        else                       { cur += ch; }
+    }
+    result.push(cur.trim());
+    return result;
+}
+
+function detectRegionColumn(headers) {
+    const priority = ['district','District','DISTRICT','state','State','STATE',
+                      'region','Region','REGION','name','Name','NAME','location','Location'];
+    for (const c of priority) { if (headers.includes(c)) return c; }
+    return headers[0];
+}
+
+// =============================================================================
+// DATA PREVIEW TABLE
+// =============================================================================
+function renderPreview(csv) {
+    if (!csv) return;
+    const { headers, rows } = csv;
+    document.getElementById('table-head').innerHTML =
+        `<tr><th class="row-num">#</th>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr>`;
+    document.getElementById('table-body').innerHTML = rows.slice(0, 10).map((row, i) =>
+        `<tr><td class="row-num">${i+1}</td>${headers.map(h => `<td>${esc(row[h] ?? '')}</td>`).join('')}</tr>`
+    ).join('');
+    document.getElementById('empty-preview').style.display = 'none';
+    document.getElementById('data-table').style.display = '';
+    const rc = detectRegionColumn(headers);
+    document.getElementById('stat-rows').textContent = rows.length.toLocaleString();
+    document.getElementById('stat-cols').textContent = headers.length;
+    document.getElementById('stat-region-col').textContent = `"${rc}"`;
+    document.getElementById('csv-stats').classList.add('visible');
+    document.getElementById('preview-badge').textContent = `${rows.length.toLocaleString()} rows · ${headers.length} cols`;
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// =============================================================================
+// PREDICTIONS — ENTRY POINT
+// =============================================================================
+function initRunButton() {
+    document.getElementById('run-btn').addEventListener('click', runPredictions);
+}
+
+async function runPredictions() {
+    if (!parsedCSV) return;
+    const btn     = document.getElementById('run-btn');
+    const btnText = document.getElementById('run-btn-text');
+    btn.disabled = true;
+    btn.classList.add('running');
+    btnText.textContent = 'Running…';
+    setStep(3);
+    document.getElementById('map-placeholder').style.display = 'none';
+    document.getElementById('result-loader').classList.add('visible');
+    document.getElementById('result-stats').classList.remove('visible');
+    d3.select('#result-map-canvas svg').remove();
+    addChatMessage('Running predictions on uploaded data…', 'system');
+    try {
+        // ── BACKEND INTEGRATION POINT ─────────────────────────────────────
+        // When FastAPI backend is ready, replace the line below with:
+        //     await callBackendAPI();
+        // ──────────────────────────────────────────────────────────────────
+        await runMockPredictions();
+    } catch (err) {
+        console.error('Prediction error:', err);
+        addChatMessage(`Error: ${err.message}`, 'system');
+        document.getElementById('result-loader').classList.remove('visible');
+        document.getElementById('map-placeholder').style.display = '';
+    }
+    btn.classList.remove('running');
+    btn.classList.add('done-btn');
+    btnText.textContent = 'Re-run';
+    btn.disabled = false;
+    lucide.createIcons();
+}
+
+// =============================================================================
+// MOCK PREDICTIONS — replace with callBackendAPI() when backend is ready
+// =============================================================================
+async function runMockPredictions() {
+    await sleep(1400 + Math.random() * 600);
+    const { headers, rows } = parsedCSV;
+    const regionCol = detectRegionColumn(headers);
+    const drivers = ['Population Density','Rainfall Anomaly','Seasonal Transmission',
+                     'Vector Habitat Index','Historical Incidence','Humidity Index'];
+    const regionMap = {};
+    rows.forEach(row => {
+        const key = normalizeName(row[regionCol]);
+        if (!key) return;
+        if (!regionMap[key]) regionMap[key] = [];
+        regionMap[key].push(row);
+    });
+    const results = {};
+    Object.entries(regionMap).forEach(([regionKey, regionRows]) => {
+        const nums = headers.filter(h => h !== regionCol)
+            .flatMap(col => regionRows.map(r => parseFloat(r[col])).filter(v => !isNaN(v)));
+        const avg  = nums.length > 0 ? nums.reduce((a,b) => a+b, 0) / nums.length : Math.random()*40;
+        const seed = Math.abs(avg) % 100;
+        const risk = Math.min(97, Math.max(8, seed + (Math.random()*28 - 14)));
+        const top_driver = drivers[Math.floor(Math.random() * drivers.length)];
+        results[regionKey] = {
+            predicted_cases: Math.max(1, Math.round(risk * (0.4 + Math.random()*0.8))),
+            risk_score:      parseFloat(risk.toFixed(1)),
+            status:          risk > 70 ? 'Critical' : risk > 50 ? 'High' : 'Low',
+            top_driver,
+            detailed_explanation:
+                `${top_driver} contributed +${(Math.random()*25+5).toFixed(1)}% risk elevation. ` +
+                `Environmental variance: ${(Math.random()*12).toFixed(1)}%. ` +
+                `Model confidence: ${(76 + Math.random()*18).toFixed(0)}%.`
+        };
+    });
+    // Store globally — modal always reads from predictionResults
+    predictionResults = results;
+    await loadAndRenderMap(results);
+    updateResultStats(results);
+    setStep(4);
+    const highRisk = Object.entries(results).filter(([,v]) => v.risk_score > 70);
+    addChatMessage(
+        `Predictions complete for <strong>${Object.keys(results).length}</strong> regions. ` +
+        (highRisk.length > 0
+            ? `<strong>${highRisk.length}</strong> high-risk: ` +
+              highRisk.sort((a,b) => b[1].risk_score - a[1].risk_score)
+                      .slice(0,3).map(([k]) => k).join(', ') +
+              (highRisk.length > 3 ? '…' : '') + '.'
+            : 'No high-risk regions detected.'),
+        'system'
+    );
+}
+
+// =============================================================================
+// BACKEND API CALL — wire this up when FastAPI is ready
+// =============================================================================
+async function callBackendAPI() {
+    const { headers, rows } = parsedCSV;
+    const csvString = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => r[h] ?? '').join(','))
+    ].join('\n');
+
+    // POST multipart/form-data — field name: "file"
+    const formData = new FormData();
+    formData.append('file', new Blob([csvString], { type: 'text/csv' }), 'data.csv');
+
+    const response = await fetch(`${API_BASE_URL}/predict`, {
+        method: 'POST',
+        body: formData
+        // Add auth headers here if needed: headers: { 'Authorization': 'Bearer <token>' }
+    });
+
+    if (!response.ok) throw new Error(`Backend ${response.status}: ${await response.text()}`);
+    const data = await response.json();
+
+    let results = {};
+    if (data.predictions && typeof data.predictions === 'object') {
+        // Shape A: { "predictions": { "Karnataka": { predicted_cases, risk_score, status, top_driver, detailed_explanation } } }
+        Object.entries(data.predictions).forEach(([k, v]) => { results[normalizeName(k)] = v; });
+    } else if (Array.isArray(data)) {
+        // Shape B: [ { region, predicted_cases, risk_score, status?, top_driver?, detailed_explanation? } ]
+        const rc = detectRegionColumn(Object.keys(data[0] || {}));
+        data.forEach(row => {
+            results[normalizeName(row[rc])] = {
+                predicted_cases:      row.predicted_cases ?? 0,
+                risk_score:           row.risk_score ?? 0,
+                status:               row.status ?? (row.risk_score > 70 ? 'Critical' : row.risk_score > 50 ? 'High' : 'Low'),
+                top_driver:           row.top_driver ?? row.driver ?? 'N/A',
+                detailed_explanation: row.explanation ?? row.detailed_explanation ?? 'N/A'
+            };
+        });
+    } else {
+        throw new Error('Unexpected backend response. Expected { predictions:{...} } or an array.');
+    }
+
+    predictionResults = results;
+    await loadAndRenderMap(results);
+    updateResultStats(results);
+    setStep(4);
+    addChatMessage(`Live predictions complete for <strong>${Object.keys(results).length}</strong> regions.`, 'system');
+}
+
+// =============================================================================
+// MAP
+// =============================================================================
+async function loadAndRenderMap(results) {
+    document.getElementById('result-loader').classList.remove('visible');
+    if (!indiaGeoJSON) {
+        document.getElementById('result-loader').classList.add('visible');
+        const r = await fetch(INDIA_GEOJSON_URL);
+        if (!r.ok) throw new Error('Could not load India GeoJSON.');
+        indiaGeoJSON = await r.json();
+        document.getElementById('result-loader').classList.remove('visible');
+    }
+    renderMap(indiaGeoJSON, results);
+}
+
+function renderMap(geojson, results) {
+    const container = document.getElementById('result-map-canvas');
+    d3.select('#result-map-canvas svg').remove();
+    const rect = container.getBoundingClientRect();
+    const w = Math.max(rect.width || 1, 100);
+    const h = Math.max(rect.height || 1, 200);
+    const svg = d3.select('#result-map-canvas').append('svg')
+        .attr('width','100%').attr('height','100%')
+        .attr('viewBox',`0 0 ${w} ${h}`)
+        .attr('preserveAspectRatio','xMidYMid meet');
+    const proj = d3.geoMercator().fitSize([w, h], geojson);
+    const pathGen = d3.geoPath().projection(proj);
+    const tooltip = document.getElementById('tooltip');
+
+    svg.selectAll('.region').data(geojson.features).enter().append('path')
+        .attr('class','region').attr('d', pathGen)
+        .attr('fill', d => {
+            const raw  = d.properties.ST_NM || d.properties.NAME_1 || d.properties.name;
+            // Always read from global predictionResults — never from stale closure
+            const data = predictionResults && predictionResults[normalizeName(raw)];
+            if (!data) return '#334155';
+            return data.risk_score > 70 ? '#ef4444' : data.risk_score > 50 ? '#eab308' : '#22c55e';
+        })
+        .style('stroke','#0f172a').style('stroke-width','0.5px').style('cursor','pointer')
+        .on('mouseover', function(event, d) {
+            const raw    = d.properties.ST_NM || d.properties.NAME_1 || d.properties.name;
+            const norm   = normalizeName(raw);
+            const data   = predictionResults && predictionResults[norm];
+            d3.select(this).style('stroke','white').style('stroke-width','2px');
+            tooltip.classList.remove('hidden');
+            tooltip.innerHTML = `
+                <div style="font-weight:700;color:#ef4444;margin-bottom:3px;">${norm}</div>
+                <div>Cases: <strong>${data ? data.predicted_cases : 'Demo'}</strong></div>
+                <div>Risk: <strong>${data ? data.risk_score + '%' : '—'}</strong></div>
+                <div style="font-size:0.68rem;color:#94a3b8;margin-top:3px;">Click for full report</div>`;
+        })
+        .on('mousemove', function(event) {
+            const tip = document.getElementById('tooltip');
+            const tw = tip.offsetWidth || 180, th = tip.offsetHeight || 80;
+            let x = event.clientX + 14, y = event.clientY + 14;
+            if (x + tw + 10 > window.innerWidth)  x = event.clientX - tw - 8;
+            if (y + th + 10 > window.innerHeight) y = event.clientY - th - 8;
+            tip.style.left = x + 'px';
+            tip.style.top  = y + 'px';
+        })
+        .on('mouseout', function() {
+            d3.select(this).style('stroke','#0f172a').style('stroke-width','0.5px');
+            tooltip.classList.add('hidden');
+        })
+        .on('click', function(event, d) {
+            const raw = d.properties.ST_NM || d.properties.NAME_1 || d.properties.name;
+            // Pass only the name — showModal reads global predictionResults itself
+            showModal(normalizeName(raw));
+        });
+
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    resizeHandler = debounce(() => {
+        if (indiaGeoJSON) renderMap(indiaGeoJSON, predictionResults || {});
+    }, 300);
+    window.addEventListener('resize', resizeHandler);
+}
+
+function updateResultStats(results) {
+    const items = Object.values(results);
+    const total = items.reduce((s,d) => s + d.predicted_cases, 0);
+    const avg   = items.reduce((s,d) => s + d.risk_score, 0) / (items.length || 1);
+    document.getElementById('res-total').textContent    = total.toLocaleString();
+    document.getElementById('res-avg-risk').textContent = avg.toFixed(1) + '%';
+    document.getElementById('res-high').textContent     = items.filter(d => d.risk_score > 70).length;
+    document.getElementById('res-low').textContent      = items.filter(d => d.risk_score <= 40).length;
+    document.getElementById('result-stats').classList.add('visible');
+}
+
+// =============================================================================
+// MODAL
+// =============================================================================
+function initModal() {
+    document.getElementById('close-modal').addEventListener('click', () =>
+        document.getElementById('district-modal').classList.add('hidden'));
+    window.addEventListener('click', e => {
+        if (e.target === document.getElementById('district-modal'))
+            document.getElementById('district-modal').classList.add('hidden');
+    });
+}
+
+// Deterministic dummy data seeded by name — same state always shows same numbers
+function generateDummyData(name) {
+    const drivers = ['Population Density','Rainfall Anomaly','Seasonal Transmission',
+                     'Vector Habitat Index','Historical Incidence','Humidity Index'];
+    const seed = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+    const risk_score      = parseFloat((((seed * 37) % 89) + 8).toFixed(1));
+    const predicted_cases = Math.max(1, Math.round(risk_score * (0.4 + ((seed*13) % 100) / 125)));
+    const status          = risk_score > 70 ? 'Critical' : risk_score > 50 ? 'High' : 'Low';
+    const top_driver      = drivers[seed % drivers.length];
+    const driver2         = drivers[(seed + 2) % drivers.length];
+    return {
+        predicted_cases, risk_score, status, top_driver,
+        detailed_explanation:
+            `${top_driver} (index: ${(seed*7)%90+10}) increased risk by ${((seed*3)%25+5).toFixed(1)}% | ` +
+            `${driver2} contributed ${((seed*11)%15+2).toFixed(1)}% variance | ` +
+            `Model confidence: ${(seed*17)%20+76}%`
+    };
+}
+
+// THE FIX: showModal takes only a name and reads from global predictionResults.
+// Previously it took a `dataSet` parameter from a stale renderMap closure,
+// which didn't match after predictions ran. Now it always has fresh data.
+function showModal(name) {
+    const isFromCSV = !!(predictionResults && predictionResults[name]);
+    const data      = isFromCSV ? predictionResults[name] : generateDummyData(name);
+
+    const riskColor = data.risk_score > 70 ? '#ef4444' : data.risk_score > 50 ? '#eab308' : '#22c55e';
+    const riskBg    = data.risk_score > 70 ? 'rgba(239,68,68,0.12)'
+                    : data.risk_score > 50 ? 'rgba(234,179,8,0.12)'
+                    :                        'rgba(34,197,94,0.12)';
+
+    document.getElementById('district-info').innerHTML = `
+        <div class="district-header">
+            <div>
+                <h2>${name}</h2>
+                <p style="color:var(--text-muted);font-size:0.8rem;">Epidemic Prediction Report</p>
+            </div>
+            <div style="background:${riskBg};color:${riskColor};padding:0.4rem 0.9rem;
+                        border-radius:2rem;font-weight:700;font-size:0.8rem;
+                        border:1px solid ${riskColor}44;white-space:nowrap;">
+                ${data.status.toUpperCase()} RISK
+            </div>
+        </div>
+        <div class="district-stats">
+            <div class="stat-item">
+                <p class="label">Predicted Cases</p>
+                <p class="value" style="color:var(--primary-red)">${data.predicted_cases}</p>
+                <p class="trend">Forecast output</p>
+            </div>
+            <div class="stat-item">
+                <p class="label">Risk Score</p>
+                <p class="value" style="color:${riskColor}">${data.risk_score}%</p>
+                <p class="trend">ML Prediction</p>
+            </div>
+            <div class="stat-item">
+                <p class="label">Primary Risk Driver</p>
+                <p class="value" style="font-size:1rem;color:var(--accent-blue)">${data.top_driver || '—'}</p>
+                <p class="trend">Explainability Layer (XAI)</p>
+            </div>
+            <div class="stat-item">
+                <p class="label">Recommended Action</p>
+                <p class="value" style="font-size:1rem;color:var(--accent-yellow)">
+                    ${data.risk_score > 60 ? 'Intensive Surveillance' : 'Routine Monitoring'}
+                </p>
+            </div>
+        </div>
+        <div class="explanation-box">
+            <h3 style="font-size:0.88rem;color:var(--text-muted);margin-bottom:0.65rem;">
+                Machine Learning Explanation (XAI)
+            </h3>
+            <p style="font-size:0.83rem;line-height:1.65;color:var(--text-main);">
+                ${data.detailed_explanation || 'No explanation available.'}
+            </p>
+        </div>
+        <div style="margin-top:0.875rem;padding:0.65rem 0.875rem;
+                    background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);
+                    border-radius:0.6rem;font-size:0.7rem;color:var(--text-muted);
+                    font-family:'JetBrains Mono',monospace;">
+            Source: ${isFromCSV
+                ? 'Prediction Results (from uploaded CSV)'
+                : 'Demo Data — upload a CSV and run predictions for live results'}
+        </div>`;
+
+    document.getElementById('district-modal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+// =============================================================================
+// CHATBOT
+// =============================================================================
+function initChatbot() {
+    const input = document.getElementById('chat-input');
+    const btn   = document.getElementById('send-btn');
+    const send  = () => {
+        const text = input.value.trim(); if (!text) return;
+        addChatMessage(text, 'user'); input.value = '';
+        setTimeout(() => addChatMessage(getChatResponse(text), 'system'), 820);
+    };
+    btn.addEventListener('click', send);
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') send(); });
+}
+
+function addChatMessage(text, sender) {
+    const msgs = document.getElementById('chat-messages');
+    const div  = document.createElement('div');
+    div.className = `message ${sender}`;
+    div.innerHTML = `<p>${text}</p>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function getChatResponse(text) {
+    const t = text.toLowerCase();
+    if (!parsedCSV)         return "Please upload a CSV file first so I can help analyze the data.";
+    if (!predictionResults) return "File uploaded! Click <strong>Run Predictions</strong> to generate results.";
+    const items    = Object.entries(predictionResults);
+    const highRisk = items.filter(([,v]) => v.risk_score > 70);
+    if (t.includes('high risk') || t.includes('highest') || t.includes('worst'))
+        return highRisk.length > 0
+            ? `Highest-risk regions: <strong>${highRisk.sort((a,b)=>b[1].risk_score-a[1].risk_score).slice(0,3).map(([k,v])=>`${k} (${v.risk_score}%)`).join(', ')}</strong>.`
+            : "No high-risk regions detected.";
+    if (t.includes('total') || t.includes('cases'))
+        return `Total predicted cases: <strong>${items.reduce((s,[,v])=>s+v.predicted_cases,0).toLocaleString()}</strong>.`;
+    if (t.includes('low risk') || t.includes('safe'))
+        return `Low-risk regions: <strong>${items.filter(([,v])=>v.risk_score<=40).map(([k])=>k).slice(0,4).join(', ')}</strong>${items.filter(([,v])=>v.risk_score<=40).length>4?'…':''}.`;
+    if (t.includes('how many') || t.includes('count'))
+        return `Predictions for <strong>${items.length}</strong> regions — ${highRisk.length} high risk, ${items.filter(([,v])=>v.risk_score<=40).length} low risk.`;
+    if (t.includes('driver') || t.includes('cause'))
+        return "Drivers are from SHAP values. Click any state on the map to see its breakdown.";
+    const avg = items.reduce((s,[,v])=>s+v.risk_score,0)/items.length;
+    return `Predictions cover ${items.length} regions. Average risk: <strong>${avg.toFixed(1)}%</strong>.`;
+}
+
+// =============================================================================
+// PIPELINE STEP INDICATOR
+// =============================================================================
+function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`step${i}-num`).className =
+            i < n ? 'step-num done' : i === n ? 'step-num active' : 'step-num pending';
+        document.getElementById(`step${i}-label`).className =
+            i === n ? 'step-label active-label' : 'step-label';
+    }
+}
+
+// =============================================================================
+// UTILITIES
+// =============================================================================
+function normalizeName(name) {
+    if (!name) return '';
+    return name.trim().replace(/\s+/g,' ').replace(/&/g,'and')
+               .toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+function formatBytes(b) {
+    return b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+</script>
+</body>
+</html>
