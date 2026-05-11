@@ -203,51 +203,69 @@ function renderMap(geojson, type) {
         .append('path')
         .attr('class', 'region')
         .attr('d', path)
-    // Determine risk level based on risk_score thresholds
-    const riskLevel = data.risk_score > 70 ? 'high' : data.risk_score > 50 ? 'medium' : 'low';
-    // Map risk level to colour matching the legend
-    if (riskLevel === 'high') return '#ef4444'; // red
-    if (riskLevel === 'medium') return '#eab308'; // amber
-    return '#22c55e'; // green for low
-})
+        .attr('fill', d => {
+            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const normName = normalizeName(name);
+            const data = currentLevelData[normName];
+
+            if (!data) return '#334155';
+            return getRiskColor(data);
+        })
         .style('stroke', 'var(--bg-dark)')
-    .style('stroke-width', '0.5px')
-    .style('cursor', 'pointer')
-    .on('mouseover', function (event, d) {
-        const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
-        const normName = normalizeName(name);
-        const data = currentLevelData[normName];
+        .style('stroke-width', '0.5px')
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event, d) {
+            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const normName = normalizeName(name);
+            const data = currentLevelData[normName];
 
-        d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
+            d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
-        const tt = document.getElementById('tooltip');
-        tt.classList.remove('hidden');
-        tt.innerHTML = `
-                <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${normName}</div>
+            const riskColor = data ? getRiskColor(data) : '#94a3b8';
+            const tt = document.getElementById('tooltip');
+            tt.classList.remove('hidden');
+            tt.innerHTML = `
+                <div style="font-weight: 700; color: ${riskColor}; margin-bottom: 4px;">${normName}</div>
                 <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
                 <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
                 <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Click to ${type === 'state' ? 'drill down' : 'view details'}</div>
             `;
-    })
-    .on('mousemove', function (event) {
-        const tt = d3.select('#tooltip');
-        tt.style('left', (event.pageX + 10) + 'px')
-            .style('top', (event.pageY + 10) + 'px');
-    })
-    .on('mouseout', function () {
-        d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
-        document.getElementById('tooltip').classList.add('hidden');
-    })
-    .on('click', function (event, d) {
-        const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
-        const normName = normalizeName(name);
+        })
+        .on('mousemove', function (event) {
+            const tt = d3.select('#tooltip');
+            tt.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY + 10) + 'px');
+        })
+        .on('mouseout', function () {
+            d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
+            document.getElementById('tooltip').classList.add('hidden');
+        })
+        .on('click', function (event, d) {
+            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
+            const normName = normalizeName(name);
 
-        if (type === 'state') {
-            loadStateView(normName);
-        } else {
-            showDistrictDetails(normName, currentLevelData);
-        }
-    });
+            if (type === 'state') {
+                loadStateView(normName);
+            } else {
+                showDistrictDetails(normName, currentLevelData);
+            }
+        });
+}
+
+function getRiskColor(data) {
+    if (!data) return '#334155';
+    const status = (data.status || '').toLowerCase();
+    if (status === 'high' || status === 'critical' || data.risk_score > 70) return '#ef4444'; // Red
+    if (status === 'medium' || data.risk_score > 50) return '#eab308'; // Amber
+    return '#22c55e'; // Green
+}
+
+function getRiskLabel(data) {
+    if (!data) return 'UNKNOWN';
+    const status = (data.status || '').toLowerCase();
+    if (status === 'high' || status === 'critical' || data.risk_score > 70) return 'HIGH';
+    if (status === 'medium' || data.risk_score > 50) return 'MEDIUM';
+    return 'LOW';
 }
 
 function showDistrictDetails(name, dataSet) {
@@ -261,15 +279,9 @@ function showDistrictDetails(name, dataSet) {
         return;
     }
 
-    let badgeColor = 'rgba(34, 197, 94, 0.2)';
-    let textColor = '#22c55e';
-    if (data.risk_score > 70) {
-        badgeColor = 'rgba(239, 68, 68, 0.2)';
-        textColor = '#ef4444';
-    } else if (data.risk_score > 50) {
-        badgeColor = 'rgba(234, 179, 8, 0.2)';
-        textColor = '#eab308';
-    }
+    const textColor = getRiskColor(data);
+    const badgeColor = textColor + '33'; // Add transparency for the badge background
+    const riskLabel = getRiskLabel(data);
 
     infoContainer.innerHTML = `
         <div class="district-header">
@@ -278,7 +290,7 @@ function showDistrictDetails(name, dataSet) {
                 <p style="color: var(--text-muted)">Epidemic Prediction Report</p>
             </div>
             <div class="badge" style="background: ${badgeColor}; color: ${textColor}; padding: 0.5rem 1.2rem; border-radius: 2rem; font-weight: 700; font-size: 0.9rem; border: 1px solid ${textColor}44;">
-                ${data.status.toUpperCase()} RISK
+                ${riskLabel} RISK
             </div>
         </div>
         <div class="district-stats">
