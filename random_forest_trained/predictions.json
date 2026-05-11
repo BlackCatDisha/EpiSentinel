@@ -1,0 +1,245 @@
+{
+    "Uttara Kannada": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 7,
+        "risk_score_percent": 80.1,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (133) increased risk by 27.7% | Total Population Scale (1,380,016) increased risk by 3.5% | Current Rainfall Intensity (0.24) decreased risk by 1.0%"
+    },
+    "Bengaluru Rural": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 79.2,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (2,233,648) increased risk by 11.8% | Local Population Density (382) increased risk by 11.5% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 4.5%"
+    },
+    "Kolar": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 77.7,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (2,562,552) increased risk by 9.7% | Local Population Density (311) increased risk by 7.7% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.2%"
+    },
+    "Chitradurga": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 8.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 74.1,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Outbreak Momentum (4-week avg) (14.25) increased risk by 7.7% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 5.0% | Recent Case Velocity (2-week avg) (10.00) increased risk by 5.0%"
+    },
+    "Mandya": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 11,
+        "risk_score_percent": 69.3,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Outbreak Momentum (4-week avg) (12.25) increased risk by 8.0% | Recent Case Velocity (2-week avg) (16.00) increased risk by 5.2% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 4.4%"
+    },
+    "Raichur": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.0,
+        "predicted_cases_next_week": 7,
+        "risk_score_percent": 68.5,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (1,849,004) increased risk by 18.2% | Local Population Density (218) increased risk by 3.3% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 1.8%"
+    },
+    "Shivamogga": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 12.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 65.7,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Outbreak Momentum (4-week avg) (15.00) increased risk by 6.7% | Recent Case Velocity (2-week avg) (17.50) increased risk by 5.8% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.5%"
+    },
+    "Tumakuru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.25,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 64.4,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 4.9% | Outbreak Momentum (4-week avg) (8.75) increased risk by 4.6% | Total Population Scale (2,387,006) increased risk by 4.0%"
+    },
+    "Chamarajanagara": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 4.0,
+        "predicted_cases_next_week": 8,
+        "risk_score_percent": 64.0,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Recent Case Velocity (2-week avg) (13.00) increased risk by 7.1% | Outbreak Momentum (4-week avg) (9.00) increased risk by 5.8% | Total Population Scale (925,954) decreased risk by 4.8%"
+    },
+    "Vijayapura": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 10,
+        "risk_score_percent": 57.0,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Recent Case Velocity (2-week avg) (6.50) increased risk by 3.8% | Total Population Scale (2,240,568) increased risk by 2.7% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.5%"
+    },
+    "Belagavi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 2.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 56.7,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (4,660,682) decreased risk by 5.9% | Recent Case Velocity (2-week avg) (13.00) increased risk by 5.1% | Outbreak Momentum (4-week avg) (11.25) increased risk by 4.5%"
+    },
+    "Bidar": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 54.9,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (291) decreased risk by 3.8% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.7% | Outbreak Momentum (4-week avg) (4.75) increased risk by 3.4%"
+    },
+    "Bagalkote": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 51.7,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (270) decreased risk by 4.4% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.9% | Historical Case Load (3 Weeks Ago) (8.00) increased risk by 2.8%"
+    },
+    "Kodagu": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 51.3,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (121) increased risk by 11.6% | Total Population Scale (499,403) decreased risk by 8.1% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.5%"
+    },
+    "Hassan": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.25,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 50.5,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Outbreak Momentum (4-week avg) (5.75) increased risk by 5.9% | Local Population Density (231) decreased risk by 5.2% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 4.4%"
+    },
+    "Davangere": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 7.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 48.9,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.1% | Total Population Scale (2,107,363) increased risk by 2.0% | Recent Case Velocity (2-week avg) (3.00) decreased risk by 1.9%"
+    },
+    "Mysuru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 7.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 48.8,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (473) decreased risk by 13.6% | Outbreak Momentum (4-week avg) (13.75) increased risk by 6.1% | Total Population Scale (2,994,709) decreased risk by 5.9%"
+    },
+    "Kalaburagi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 46.9,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (3,693,906) decreased risk by 5.5% | Outbreak Momentum (4-week avg) (28.00) increased risk by 5.2% | Recent Case Velocity (2-week avg) (17.50) increased risk by 4.3%"
+    },
+    "Chikkamagaluru": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 3.0,
+        "predicted_cases_next_week": 5,
+        "risk_score_percent": 44.6,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (1,003,996) decreased risk by 7.8% | Local Population Density (139) decreased risk by 3.6% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.5%"
+    },
+    "Dharwad": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 0.25,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 43.8,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (418) decreased risk by 10.4% | Outbreak Momentum (4-week avg) (5.75) increased risk by 2.8% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.5%"
+    },
+    "Ballari": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.25,
+        "predicted_cases_next_week": 8,
+        "risk_score_percent": 42.4,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (300) decreased risk by 5.5% | Total Population Scale (2,540,928) increased risk by 4.7% | Previous Week Temperature (25.15) decreased risk by 2.9%"
+    },
+    "Koppal": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 41.8,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (238) decreased risk by 5.1% | Total Population Scale (1,331,777) decreased risk by 4.0% | Historical Case Load (3 Weeks Ago) (9.00) increased risk by 3.0%"
+    },
+    "Haveri": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 6.0,
+        "predicted_cases_next_week": 7,
+        "risk_score_percent": 38.5,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (285) decreased risk by 6.4% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.7% | Total Population Scale (1,373,132) decreased risk by 2.4%"
+    },
+    "Gadag": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 5.0,
+        "predicted_cases_next_week": 6,
+        "risk_score_percent": 35.2,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (1,041,286) decreased risk by 7.8% | Local Population Density (224) decreased risk by 4.6% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.0%"
+    },
+    "Bengaluru Urban": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 1.0,
+        "predicted_cases_next_week": 4,
+        "risk_score_percent": 35.0,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (5,223) decreased risk by 7.0% | Total Population Scale (11,424,837) decreased risk by 6.0% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.7%"
+    },
+    "Dakshina Kannada": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 10.0,
+        "predicted_cases_next_week": 12,
+        "risk_score_percent": 34.9,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Local Population Density (435) decreased risk by 9.6% | Temperature Trend (2 Weeks Ago) (26.59) decreased risk by 5.0% | Current Average Temperature (26.14) decreased risk by 3.6%"
+    },
+    "Udupi": {
+        "year": 2023,
+        "iso_week": 50,
+        "outbreak_threshold": 8.0,
+        "predicted_cases_next_week": 9,
+        "risk_score_percent": 19.1,
+        "top_driver": "Total Population Scale",
+        "detailed_explanation": "Total Population Scale (1,063,433) decreased risk by 8.1% | Local Population Density (272) decreased risk by 7.9% | Previous Week Temperature (26.85) decreased risk by 4.9%"
+    }
+}

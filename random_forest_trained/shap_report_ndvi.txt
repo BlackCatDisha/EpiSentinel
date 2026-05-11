@@ -1,0 +1,63 @@
+=== EPISENTINEL ENHANCED MODEL INSIGHTS (NDVI + NEW POP) ===
+What drives outbreak predictions globally?
+
+- Local Population Density            : Avg Impact 0.0621
+- Total Population Scale              : Avg Impact 0.0557
+- Outbreak Momentum (4-week avg)      : Avg Impact 0.0245
+- Seasonal Transmission Cycle (Sine)  : Avg Impact 0.0243
+- Recent Case Velocity (2-week avg)   : Avg Impact 0.0198
+- Humidity Trend (2 Weeks Ago)        : Avg Impact 0.0122
+- Current Average Temperature         : Avg Impact 0.0118
+- Previous Week Temperature           : Avg Impact 0.0116
+- Temperature Trend (2 Weeks Ago)     : Avg Impact 0.0096
+- Rainfall Trend (2 Weeks Ago)        : Avg Impact 0.0094
+- Previous Week Humidity              : Avg Impact 0.0086
+- Immediate Case Surge (Last Week)    : Avg Impact 0.0085
+- Infection Prevalence (Cases per 100k) : Avg Impact 0.0084
+- Persistent Transmission (2 Weeks Ago) : Avg Impact 0.0081
+- Historical Case Load (3 Weeks Ago)  : Avg Impact 0.0077
+- Previous Week Rainfall              : Avg Impact 0.0076
+- Current Humidity Levels             : Avg Impact 0.0067
+- Vegetation Density (NDVI Index)     : Avg Impact 0.0065
+- Current Rainfall Intensity          : Avg Impact 0.0049
+- Seasonal Transmission Cycle (Cosine) : Avg Impact 0.0035
+
+
+=== MODEL PERFORMANCE (VALIDATED ON 2022-2023) ===
+Decision Threshold: 0.40
+F1-Score:           0.72
+Precision:          0.70
+Recall:             0.74
+MAE (Regression):   4.83 cases
+R2 Score:           0.11
+
+
+=== FULL DISTRICT-WISE AUDIT TRAIL ===
+        district  year  iso_week  outbreak_threshold  predicted_cases_next_week  risk_score_percent             top_driver                                                                                                                                                                                    detailed_explanation
+  Uttara Kannada  2023        50                0.00                          6                81.0 Total Population Scale                  Local Population Density (133) increased risk by 25.5% | Total Population Scale (1,380,016) increased risk by 4.8% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 1.5%
+           Kolar  2023        50                0.00                          5                77.4 Total Population Scale                          Total Population Scale (2,562,552) increased risk by 9.5% | Local Population Density (311) increased risk by 6.8% | Current Average Temperature (21.07) increased risk by 3.5%
+ Bengaluru Rural  2023        50                0.00                          4                75.0 Total Population Scale                  Total Population Scale (2,233,648) increased risk by 11.9% | Local Population Density (382) increased risk by 8.9% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.1%
+     Chitradurga  2023        50                8.00                         12                74.9 Total Population Scale    Outbreak Momentum (4-week avg) (14.25) increased risk by 8.3% | Recent Case Velocity (2-week avg) (10.00) increased risk by 4.8% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.9%
+          Mandya  2023        50                3.00                         11                70.2 Total Population Scale    Outbreak Momentum (4-week avg) (12.25) increased risk by 8.1% | Recent Case Velocity (2-week avg) (16.00) increased risk by 6.4% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.7%
+         Raichur  2023        50                0.00                          7                66.8 Total Population Scale                  Total Population Scale (1,849,004) increased risk by 17.9% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.0% | Local Population Density (218) increased risk by 1.9%
+      Shivamogga  2023        50               12.00                         12                65.3 Total Population Scale Outbreak Momentum (4-week avg) (15.00) increased risk by 7.8% | Recent Case Velocity (2-week avg) (17.50) increased risk by 5.6% | Persistent Transmission (2 Weeks Ago) (30.00) increased risk by 3.3%
+ Chamarajanagara  2023        50                4.00                          8                65.3 Total Population Scale               Outbreak Momentum (4-week avg) (9.00) increased risk by 6.1% | Recent Case Velocity (2-week avg) (13.00) increased risk by 6.1% | Total Population Scale (925,954) decreased risk by 5.1%
+        Tumakuru  2023        50                3.25                          5                62.6 Total Population Scale                Outbreak Momentum (4-week avg) (8.75) increased risk by 4.1% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.8% | Local Population Density (224) decreased risk by 3.7%
+      Vijayapura  2023        50                6.00                          8                58.6 Total Population Scale              Outbreak Momentum (4-week avg) (7.50) increased risk by 3.5% | Recent Case Velocity (2-week avg) (6.50) increased risk by 3.5% | Total Population Scale (2,240,568) increased risk by 2.6%
+        Belagavi  2023        50                2.00                         12                55.1 Total Population Scale            Total Population Scale (4,660,682) decreased risk by 6.1% | Outbreak Momentum (4-week avg) (11.25) increased risk by 5.9% | Recent Case Velocity (2-week avg) (13.00) increased risk by 3.9%
+          Kodagu  2023        50                1.00                          5                53.5 Total Population Scale                    Local Population Density (121) increased risk by 11.6% | Total Population Scale (499,403) decreased risk by 7.1% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.4%
+       Bagalkote  2023        50                3.00                          6                48.8 Total Population Scale            Local Population Density (270) decreased risk by 4.1% | Historical Case Load (3 Weeks Ago) (8.00) increased risk by 2.4% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.3%
+      Kalaburagi  2023        50                6.00                         12                48.4 Total Population Scale            Total Population Scale (3,693,906) decreased risk by 6.5% | Outbreak Momentum (4-week avg) (28.00) increased risk by 5.9% | Recent Case Velocity (2-week avg) (17.50) increased risk by 4.2%
+          Hassan  2023        50                3.25                          5                47.8 Total Population Scale                        Outbreak Momentum (4-week avg) (5.75) increased risk by 5.2% | Local Population Density (231) decreased risk by 5.0% | Total Population Scale (1,580,850) decreased risk by 3.1%
+          Mysuru  2023        50                7.00                         12                47.1 Total Population Scale                      Local Population Density (473) decreased risk by 12.9% | Total Population Scale (2,994,709) decreased risk by 6.4% | Outbreak Momentum (4-week avg) (13.75) increased risk by 5.9%
+  Chikkamagaluru  2023        50                3.00                          5                45.8 Total Population Scale                   Total Population Scale (1,003,996) decreased risk by 7.2% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 3.5% | Local Population Density (139) decreased risk by 2.9%
+         Dharwad  2023        50                0.25                          6                45.6 Total Population Scale                Local Population Density (418) decreased risk by 8.0% | Outbreak Momentum (4-week avg) (5.75) increased risk by 2.6% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.1%
+           Bidar  2023        50                1.00                          5                45.3 Total Population Scale                        Local Population Density (291) decreased risk by 4.0% | Total Population Scale (1,587,336) decreased risk by 2.7% | Outbreak Momentum (4-week avg) (4.75) increased risk by 2.5%
+       Davangere  2023        50                7.00                          6                43.4 Total Population Scale          Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.3% | Recent Case Velocity (2-week avg) (3.00) decreased risk by 1.8% | Current Rainfall Intensity (0.39) decreased risk by 1.6%
+          Koppal  2023        50                5.00                          6                42.0 Total Population Scale                    Local Population Density (238) decreased risk by 5.0% | Total Population Scale (1,331,777) decreased risk by 3.9% | Historical Case Load (3 Weeks Ago) (9.00) increased risk by 2.6%
+         Ballari  2023        50                5.25                          8                42.0 Total Population Scale                            Total Population Scale (2,540,928) increased risk by 5.3% | Local Population Density (300) decreased risk by 5.2% | Previous Week Temperature (25.15) decreased risk by 1.8%
+          Haveri  2023        50                6.00                          7                37.2 Total Population Scale                   Local Population Density (285) decreased risk by 6.4% | Total Population Scale (1,373,132) decreased risk by 2.9% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.0%
+           Gadag  2023        50                5.00                          7                34.0 Total Population Scale                            Total Population Scale (1,041,286) decreased risk by 7.9% | Local Population Density (224) decreased risk by 4.1% | Current Rainfall Intensity (0.16) decreased risk by 2.2%
+Dakshina Kannada  2023        50               10.00                         12                32.0 Total Population Scale                     Local Population Density (435) decreased risk by 8.3% | Recent Case Velocity (2-week avg) (23.50) increased risk by 4.4% | Previous Week Temperature (26.22) decreased risk by 4.3%
+ Bengaluru Urban  2023        50                1.00                          5                31.8 Total Population Scale                Total Population Scale (11,424,837) decreased risk by 6.7% | Local Population Density (5,223) decreased risk by 6.6% | Seasonal Transmission Cycle (Sine) (-0.24) increased risk by 2.3%
+           Udupi  2023        50                8.00                          8                17.4 Total Population Scale                            Total Population Scale (1,063,433) decreased risk by 8.6% | Local Population Density (272) decreased risk by 7.2% | Previous Week Temperature (26.85) decreased risk by 4.9%
