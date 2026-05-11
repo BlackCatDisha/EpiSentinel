@@ -1,0 +1,21 @@
+{
+  "train_years": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021
+  ],
+  "val_year": 2022,
+  "test_year": 2023,
+  "dropped_features": [
+    "district",
+    "population_2011"
+  ],
+  "feature_count": 26,
+  "files": {
+    "long": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_all_models_long.csv",
+    "combined": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_all_models_combined.csv",
+    "top10": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_top10_per_model.csv"
+  }
+}
