@@ -23,8 +23,18 @@ let currentGeoJSON = null;
 let currentLevelData = stateData;
 let selectedState = null;
 let stateDistrictData = {}; // Cache for dummy district data
+let stateMapConfig = {}; // Mapping for state-specific district GeoJSON URLs
 
 async function initDashboard() {
+    // Fetch state map config
+    try {
+        const configResp = await fetch('state_map_urls.json');
+        if (configResp.ok) {
+            stateMapConfig = await configResp.json();
+            console.log("Loaded state map configuration");
+        }
+    } catch (e) { console.error("Failed to load state map config:", e); }
+
     // Add resize listener
     window.addEventListener('resize', debounce(() => {
         if (currentGeoJSON) renderMap(currentGeoJSON, currentView === 'india' ? 'state' : 'district');
@@ -89,19 +99,23 @@ async function loadStateView(stateName) {
     try {
         let geojson = null;
 
-        // 1. Try local Karnataka first
-        if (stateName === 'Karnataka') {
+        // 1. Try URL from config first (Mapping provided in state_map_urls.json)
+        const configUrl = stateMapConfig[stateName];
+        if (configUrl) {
             try {
-                const response = await fetch('karnataka_districts.json');
-                if (response.ok) geojson = await response.json();
-            } catch (e) { console.warn("Local Karnataka GeoJSON failed, trying fallbacks."); }
+                const response = await fetch(configUrl);
+                if (response.ok) {
+                    geojson = await response.json();
+                    console.log(`Loaded ${stateName} map from config URL: ${configUrl}`);
+                }
+            } catch (e) { console.warn(`Config URL for ${stateName} failed, trying general fallbacks.`); }
         }
 
-        // 2. Try online sources if not loaded yet
+        // 2. Try online fallbacks if not loaded yet
         if (!geojson) {
             const stateSlug = stateName.toLowerCase().replace(/ /g, '_');
             const stateSlugSimple = stateName.toLowerCase().replace(/ /g, '');
-
+            
             const urls = [
                 `${STATE_GEOJSON_BASE_URL}${stateSlug}.geojson`,
                 `https://raw.githubusercontent.com/geohacker/india/master/district/${stateSlug}.geojson`,
@@ -114,7 +128,7 @@ async function loadStateView(stateName) {
                     const response = await fetch(url);
                     if (response.ok) {
                         geojson = await response.json();
-                        console.log(`Loaded ${stateName} map from: ${url}`);
+                        console.log(`Loaded ${stateName} map from fallback: ${url}`);
                         break;
                     }
                 } catch (e) { continue; }
@@ -142,7 +156,8 @@ async function loadStateView(stateName) {
     } catch (error) {
         console.error(`Error loading ${stateName} map:`, error);
         showMapError(`Failed to load district map for ${stateName}. ${error.message}`);
-        setTimeout(loadIndiaView, 8000); // Give user more time to read the error
+        // Keep the back button visible so user can navigate back manually
+        document.getElementById('back-to-india').classList.remove('hidden');
     }
 }
 

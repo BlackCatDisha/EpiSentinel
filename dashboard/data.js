@@ -58,6 +58,7 @@ const nameAliasMap = {
     "Kolar": "Kolar",
     "Mandya": "Mandya",
     "Tumkur": "Tumakuru",
+    "Davanagere": "Davangere",
     "Andaman and Nicobar Islands": "Andaman & Nicobar",
     "Dadra and Nagar Haveli and Daman and Diu": "D&N Haveli & Daman & Diu",
     "Jammu and Kashmir": "Jammu & Kashmir",
