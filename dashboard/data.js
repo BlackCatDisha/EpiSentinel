@@ -99,13 +99,13 @@ const stateData = {
 function normalizeName(name) {
     if (!name) return name;
     if (nameAliasMap[name]) return nameAliasMap[name];
-    
+
     const lowerName = name.toLowerCase();
     // Check aliases case-insensitively
     for (const key in nameAliasMap) {
         if (key.toLowerCase() === lowerName) return nameAliasMap[key];
     }
-    
+
     // Check stateData keys case-insensitively
     for (const key in stateData) {
         if (key.toLowerCase() === lowerName) return key;

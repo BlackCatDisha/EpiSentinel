@@ -115,7 +115,7 @@ async function loadStateView(stateName) {
         if (!geojson) {
             const stateSlug = stateName.toLowerCase().replace(/ /g, '_');
             const stateSlugSimple = stateName.toLowerCase().replace(/ /g, '');
-            
+
             const urls = [
                 `${STATE_GEOJSON_BASE_URL}${stateSlug}.geojson`,
                 `https://raw.githubusercontent.com/geohacker/india/master/district/${stateSlug}.geojson`,
@@ -203,54 +203,51 @@ function renderMap(geojson, type) {
         .append('path')
         .attr('class', 'region')
         .attr('d', path)
-        .attr('fill', d => {
-            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
-            const normName = normalizeName(name);
-            const data = currentLevelData[normName];
-
-            if (!data) return '#334155';
-            if (data.risk_score > 70) return '#ef4444';
-            if (data.risk_score > 50) return '#eab308';
-            return '#22c55e';
-        })
+    // Determine risk level based on risk_score thresholds
+    const riskLevel = data.risk_score > 70 ? 'high' : data.risk_score > 50 ? 'medium' : 'low';
+    // Map risk level to colour matching the legend
+    if (riskLevel === 'high') return '#ef4444'; // red
+    if (riskLevel === 'medium') return '#eab308'; // amber
+    return '#22c55e'; // green for low
+})
         .style('stroke', 'var(--bg-dark)')
-        .style('stroke-width', '0.5px')
-        .style('cursor', 'pointer')
-        .on('mouseover', function (event, d) {
-            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
-            const normName = normalizeName(name);
-            const data = currentLevelData[normName];
+    .style('stroke-width', '0.5px')
+    .style('cursor', 'pointer')
+    .on('mouseover', function (event, d) {
+        const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
+        const normName = normalizeName(name);
+        const data = currentLevelData[normName];
 
-            d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
+        d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
-            const tt = document.getElementById('tooltip');
-            tt.classList.remove('hidden');
-            tt.innerHTML = `
+        const tt = document.getElementById('tooltip');
+        tt.classList.remove('hidden');
+        tt.innerHTML = `
                 <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${normName}</div>
                 <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
                 <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
                 <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Click to ${type === 'state' ? 'drill down' : 'view details'}</div>
             `;
-        })
-        .on('mousemove', function (event) {
-            const tt = d3.select('#tooltip');
-            tt.style('left', (event.pageX + 10) + 'px')
-                .style('top', (event.pageY + 10) + 'px');
-        })
-        .on('mouseout', function () {
-            d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
-            document.getElementById('tooltip').classList.add('hidden');
-        })
-        .on('click', function (event, d) {
-            const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
-            const normName = normalizeName(name);
+    })
+    .on('mousemove', function (event) {
+        const tt = d3.select('#tooltip');
+        tt.style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY + 10) + 'px');
+    })
+    .on('mouseout', function () {
+        d3.select(this).style('stroke', 'var(--bg-dark)').style('stroke-width', '0.5px');
+        document.getElementById('tooltip').classList.add('hidden');
+    })
+    .on('click', function (event, d) {
+        const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
+        const normName = normalizeName(name);
 
-            if (type === 'state') {
-                loadStateView(normName);
-            } else {
-                showDistrictDetails(normName, currentLevelData);
-            }
-        });
+        if (type === 'state') {
+            loadStateView(normName);
+        } else {
+            showDistrictDetails(normName, currentLevelData);
+        }
+    });
 }
 
 function showDistrictDetails(name, dataSet) {
