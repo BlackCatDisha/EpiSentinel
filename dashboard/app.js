@@ -16,25 +16,47 @@ function initSidebar() {
 }
 
 const INDIA_GEOJSON_URL = 'https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson';
-const STATE_GEOJSON_BASE_URL = 'https://raw.githubusercontent.com/inosaint/StatesOfIndia/master/';
+
+const STATE_DISTRICT_URLS = {
+    "Andhra Pradesh": "https://raw.githubusercontent.com/datta07/INDIAN-SHAPEFILES/master/STATES/ANDHRA%20PRADESH/ANDHRA%20PRADESH_DISTRICTS.geojson",
+    "Arunachal Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/arunachal_pradesh.geojson",
+    "Assam": "https://raw.githubusercontent.com/geohacker/india/master/district/assam.geojson",
+    "Bihar": "https://raw.githubusercontent.com/geohacker/india/master/district/bihar.geojson",
+    "Chhattisgarh": "https://raw.githubusercontent.com/geohacker/india/master/district/chhattisgarh.geojson",
+    "Goa": "https://raw.githubusercontent.com/geohacker/india/master/district/goa.geojson",
+    "Gujarat": "https://raw.githubusercontent.com/geohacker/india/master/district/gujarat.geojson",
+    "Haryana": "https://raw.githubusercontent.com/geohacker/india/master/district/haryana.geojson",
+    "Himachal Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/himachal_pradesh.geojson",
+    "Jammu & Kashmir": "https://raw.githubusercontent.com/geohacker/india/master/district/jammu_kashmir.geojson",
+    "Jharkhand": "https://raw.githubusercontent.com/geohacker/india/master/district/jharkhand.geojson",
+    "Karnataka": "karnataka_districts.json",
+    "Kerala": "https://raw.githubusercontent.com/geohacker/india/master/district/kerala.geojson",
+    "Madhya Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/madhya_pradesh.geojson",
+    "Maharashtra": "https://raw.githubusercontent.com/geohacker/india/master/district/maharashtra.geojson",
+    "Manipur": "https://raw.githubusercontent.com/geohacker/india/master/district/manipur.geojson",
+    "Meghalaya": "https://raw.githubusercontent.com/geohacker/india/master/district/meghalaya.geojson",
+    "Mizoram": "https://raw.githubusercontent.com/geohacker/india/master/district/mizoram.geojson",
+    "Nagaland": "https://raw.githubusercontent.com/geohacker/india/master/district/nagaland.geojson",
+    "Odisha": "https://raw.githubusercontent.com/geohacker/india/master/district/odisha.geojson",
+    "Punjab": "https://raw.githubusercontent.com/geohacker/india/master/district/punjab.geojson",
+    "Rajasthan": "https://raw.githubusercontent.com/geohacker/india/master/district/rajasthan.geojson",
+    "Sikkim": "https://raw.githubusercontent.com/geohacker/india/master/district/sikkim.geojson",
+    "Tamil Nadu": "https://raw.githubusercontent.com/geohacker/india/master/district/tamil_nadu.geojson",
+    "Telangana": "https://raw.githubusercontent.com/geohacker/india/master/district/telangana.geojson",
+    "Tripura": "https://raw.githubusercontent.com/geohacker/india/master/district/tripura.geojson",
+    "Uttar Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/uttar_pradesh.geojson",
+    "Uttarakhand": "https://raw.githubusercontent.com/geohacker/india/master/district/uttarakhand.geojson",
+    "West Bengal": "https://raw.githubusercontent.com/geohacker/india/master/district/west_bengal.geojson",
+    "Delhi": "https://raw.githubusercontent.com/geohacker/india/master/district/delhi.geojson"
+};
 
 let currentView = 'india'; // 'india' or 'state'
 let currentGeoJSON = null;
 let currentLevelData = stateData;
 let selectedState = null;
 let stateDistrictData = {}; // Cache for dummy district data
-let stateMapConfig = {}; // Mapping for state-specific district GeoJSON URLs
 
 async function initDashboard() {
-    // Fetch state map config
-    try {
-        const configResp = await fetch('state_map_urls.json');
-        if (configResp.ok) {
-            stateMapConfig = await configResp.json();
-            console.log("Loaded state map configuration");
-        }
-    } catch (e) { console.error("Failed to load state map config:", e); }
-
     // Add resize listener
     window.addEventListener('resize', debounce(() => {
         if (currentGeoJSON) renderMap(currentGeoJSON, currentView === 'india' ? 'state' : 'district');
@@ -97,47 +119,18 @@ async function loadStateView(stateName) {
     document.getElementById('map-error').classList.add('hidden');
 
     try {
-        let geojson = null;
-
-        // 1. Try URL from config first (Mapping provided in state_map_urls.json)
-        const configUrl = stateMapConfig[stateName];
-        if (configUrl) {
-            try {
-                const response = await fetch(configUrl);
-                if (response.ok) {
-                    geojson = await response.json();
-                    console.log(`Loaded ${stateName} map from config URL: ${configUrl}`);
-                }
-            } catch (e) { console.warn(`Config URL for ${stateName} failed, trying general fallbacks.`); }
+        const url = STATE_DISTRICT_URLS[stateName];
+        if (!url) {
+            throw new Error(`No district map URL available for ${stateName}.`);
         }
 
-        // 2. Try online fallbacks if not loaded yet
-        if (!geojson) {
-            const stateSlug = stateName.toLowerCase().replace(/ /g, '_');
-            const stateSlugSimple = stateName.toLowerCase().replace(/ /g, '');
-
-            const urls = [
-                `${STATE_GEOJSON_BASE_URL}${stateSlug}.geojson`,
-                `https://raw.githubusercontent.com/geohacker/india/master/district/${stateSlug}.geojson`,
-                `https://raw.githubusercontent.com/geohacker/india/master/district/${stateSlugSimple}.geojson`,
-                `https://raw.githubusercontent.com/HindustanTimesLabs/shapefiles/master/india/${stateSlug}.json`
-            ];
-
-            for (const url of urls) {
-                try {
-                    const response = await fetch(url);
-                    if (response.ok) {
-                        geojson = await response.json();
-                        console.log(`Loaded ${stateName} map from fallback: ${url}`);
-                        break;
-                    }
-                } catch (e) { continue; }
-            }
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load from ${url}: ${response.status}`);
         }
 
-        if (!geojson) {
-            throw new Error(`District boundaries for ${stateName} could not be retrieved from online repositories.`);
-        }
+        const geojson = await response.json();
+        console.log(`Loaded ${stateName} map from: ${url}`);
 
         currentGeoJSON = geojson;
 
@@ -156,8 +149,7 @@ async function loadStateView(stateName) {
     } catch (error) {
         console.error(`Error loading ${stateName} map:`, error);
         showMapError(`Failed to load district map for ${stateName}. ${error.message}`);
-        // Keep the back button visible so user can navigate back manually
-        document.getElementById('back-to-india').classList.remove('hidden');
+        setTimeout(loadIndiaView, 8000); // Give user more time to read the error
     }
 }
 
@@ -209,7 +201,9 @@ function renderMap(geojson, type) {
             const data = currentLevelData[normName];
 
             if (!data) return '#334155';
-            return getRiskColor(data);
+            if (data.risk_score > 70) return '#ef4444';
+            if (data.risk_score > 50) return '#eab308';
+            return '#22c55e';
         })
         .style('stroke', 'var(--bg-dark)')
         .style('stroke-width', '0.5px')
@@ -221,11 +215,10 @@ function renderMap(geojson, type) {
 
             d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
-            const riskColor = data ? getRiskColor(data) : '#94a3b8';
             const tt = document.getElementById('tooltip');
             tt.classList.remove('hidden');
             tt.innerHTML = `
-                <div style="font-weight: 700; color: ${riskColor}; margin-bottom: 4px;">${normName}</div>
+                <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${normName}</div>
                 <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
                 <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
                 <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Click to ${type === 'state' ? 'drill down' : 'view details'}</div>
@@ -252,22 +245,6 @@ function renderMap(geojson, type) {
         });
 }
 
-function getRiskColor(data) {
-    if (!data) return '#334155';
-    const status = (data.status || '').toLowerCase();
-    if (status === 'high' || status === 'critical' || data.risk_score > 70) return '#ef4444'; // Red
-    if (status === 'medium' || data.risk_score > 50) return '#eab308'; // Amber
-    return '#22c55e'; // Green
-}
-
-function getRiskLabel(data) {
-    if (!data) return 'UNKNOWN';
-    const status = (data.status || '').toLowerCase();
-    if (status === 'high' || status === 'critical' || data.risk_score > 70) return 'HIGH';
-    if (status === 'medium' || data.risk_score > 50) return 'MEDIUM';
-    return 'LOW';
-}
-
 function showDistrictDetails(name, dataSet) {
     const infoContainer = document.getElementById('district-info');
     const modal = document.getElementById('district-modal');
@@ -279,9 +256,15 @@ function showDistrictDetails(name, dataSet) {
         return;
     }
 
-    const textColor = getRiskColor(data);
-    const badgeColor = textColor + '33'; // Add transparency for the badge background
-    const riskLabel = getRiskLabel(data);
+    let badgeColor = 'rgba(34, 197, 94, 0.2)';
+    let textColor = '#22c55e';
+    if (data.risk_score > 70) {
+        badgeColor = 'rgba(239, 68, 68, 0.2)';
+        textColor = '#ef4444';
+    } else if (data.risk_score > 50) {
+        badgeColor = 'rgba(234, 179, 8, 0.2)';
+        textColor = '#eab308';
+    }
 
     infoContainer.innerHTML = `
         <div class="district-header">
@@ -290,7 +273,7 @@ function showDistrictDetails(name, dataSet) {
                 <p style="color: var(--text-muted)">Epidemic Prediction Report</p>
             </div>
             <div class="badge" style="background: ${badgeColor}; color: ${textColor}; padding: 0.5rem 1.2rem; border-radius: 2rem; font-weight: 700; font-size: 0.9rem; border: 1px solid ${textColor}44;">
-                ${riskLabel} RISK
+                ${data.status.toUpperCase()} RISK
             </div>
         </div>
         <div class="district-stats">
