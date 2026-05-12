@@ -52,6 +52,7 @@ const STATE_DISTRICT_URLS = {
 
 let currentView = 'india'; // 'india' or 'state'
 let currentGeoJSON = null;
+let indiaGeoJSON = null; // Always preserve the India map geojson
 let currentLevelData = stateData;
 let selectedState = null;
 let stateDistrictData = {}; // Cache for dummy district data
@@ -65,8 +66,19 @@ async function initDashboard() {
     // Back button logic
     const backBtn = document.getElementById('back-to-india');
     if (backBtn) {
-        backBtn.addEventListener('click', () => {
-            loadIndiaView();
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentView = 'india';
+            currentLevelData = stateData;
+            selectedState = null;
+            currentGeoJSON = indiaGeoJSON; // Restore India map
+            document.getElementById('map-title').textContent = 'India Overview';
+            document.getElementById('back-to-india').classList.add('hidden');
+            hideMapMessage();
+            if (indiaGeoJSON) {
+                renderMap(indiaGeoJSON, 'state');
+                updateGlobalStats(stateData);
+            }
         });
     }
 
@@ -97,10 +109,12 @@ async function loadIndiaView() {
     document.getElementById('map-title').textContent = 'India Overview';
     document.getElementById('back-to-india').classList.add('hidden');
     document.getElementById('map-loader').style.display = 'block';
+    hideMapMessage();
 
     try {
         const response = await fetch(INDIA_GEOJSON_URL);
-        currentGeoJSON = await response.json();
+        indiaGeoJSON = await response.json();
+        currentGeoJSON = indiaGeoJSON;
         renderMap(currentGeoJSON, 'state');
         updateGlobalStats(stateData);
     } catch (error) {
@@ -120,36 +134,69 @@ async function loadStateView(stateName) {
 
     try {
         const url = STATE_DISTRICT_URLS[stateName];
-        if (!url) {
-            throw new Error(`No district map URL available for ${stateName}.`);
-        }
+        let geojson = null;
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to load from ${url}: ${response.status}`);
-        }
-
-        const geojson = await response.json();
-        console.log(`Loaded ${stateName} map from: ${url}`);
-
-        currentGeoJSON = geojson;
-
-        // 3. Use real data for Karnataka, generate dummy for others
         if (stateName === 'Karnataka') {
-            currentLevelData = districtData;
-        } else {
-            if (!stateDistrictData[stateName]) {
-                stateDistrictData[stateName] = generateDummyDistricts(currentGeoJSON.features);
+            if (!url) {
+                throw new Error(`No district map URL available for ${stateName}.`);
             }
-            currentLevelData = stateDistrictData[stateName];
-        }
 
-        renderMap(currentGeoJSON, 'district');
-        updateGlobalStats(currentLevelData);
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to load from ${url}: ${response.status}`);
+            }
+
+            geojson = await response.json();
+            currentGeoJSON = geojson;
+            currentLevelData = districtData;
+            renderMap(currentGeoJSON, 'district');
+            updateGlobalStats(currentLevelData);
+            hideMapMessage();
+        } else {
+            if (url) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        geojson = await response.json();
+                        currentGeoJSON = geojson;
+                        if (!stateDistrictData[stateName]) {
+                            stateDistrictData[stateName] = generateDummyDistricts(currentGeoJSON.features);
+                        }
+                        currentLevelData = stateDistrictData[stateName];
+                        renderMap(currentGeoJSON, 'district');
+                        updateGlobalStats(currentLevelData);
+                    }
+                } catch (ignored) {
+                    // ignore fetch failures for preview-only states
+                }
+            }
+
+            if (!geojson) {
+                // if we cannot load the district boundary, keep the India map visible and show preview info
+                if (currentGeoJSON && currentView === 'state') {
+                    renderMap(currentGeoJSON, 'state');
+                }
+                currentLevelData = stateData;
+                updateGlobalStats(stateData);
+            }
+
+            document.getElementById('back-to-india').classList.remove('hidden');
+            showMapMessage(
+                `Coming soon — detailed district risk data is currently available only for Karnataka. This preview shows the district boundaries for ${stateName} while we expand our coverage.`,
+                'info'
+            );
+        }
     } catch (error) {
         console.error(`Error loading ${stateName} map:`, error);
-        showMapError(`Failed to load district map for ${stateName}. ${error.message}`);
-        setTimeout(loadIndiaView, 8000); // Give user more time to read the error
+        if (stateName !== 'Karnataka') {
+            showMapMessage(
+                `Coming soon — detailed district risk data is currently available only for Karnataka. ${stateName} is a preview state.`,
+                'info'
+            );
+        } else {
+            showMapError(`Failed to load district map for ${stateName}. ${error.message}`);
+            setTimeout(loadIndiaView, 8000); // Give user more time to read the error
+        }
     }
 }
 
@@ -157,8 +204,8 @@ function renderMap(geojson, type) {
     const mapContainer = document.getElementById('map-canvas');
     if (!mapContainer) return;
 
-    // Clear previous SVG
-    d3.select('#map-canvas svg').remove();
+    // Clear all previous SVGs
+    d3.selectAll('#map-canvas svg').remove();
 
     // Get container dimensions accurately
     const rect = mapContainer.getBoundingClientRect();
@@ -198,8 +245,14 @@ function renderMap(geojson, type) {
         .attr('fill', d => {
             const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
             const normName = normalizeName(name);
+            
+            // On India map (state view), only Karnataka is bright, all others are grey
+            if (type === 'state') {
+                return normName === 'karnataka' ? '#10b981' : '#6b7280';
+            }
+            
+            // On district view, use risk score coloring
             const data = currentLevelData[normName];
-
             if (!data) return '#334155';
             if (data.risk_score > 70) return '#ef4444';
             if (data.risk_score > 50) return '#eab308';
@@ -212,6 +265,7 @@ function renderMap(geojson, type) {
             const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
             const normName = normalizeName(name);
             const data = currentLevelData[normName];
+            const isPreviewState = type === 'state' && normName !== 'karnataka';
 
             d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
@@ -221,7 +275,9 @@ function renderMap(geojson, type) {
                 <div style="font-weight: 700; color: #ef4444; margin-bottom: 4px;">${normName}</div>
                 <div style="font-size: 0.8rem;">Predicted Cases: <strong>${data ? data.predicted_cases : 'N/A'}</strong></div>
                 <div style="font-size: 0.8rem;">Risk Score: <strong>${data ? data.risk_score + '%' : 'N/A'}</strong></div>
-                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Click to ${type === 'state' ? 'drill down' : 'view details'}</div>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">
+                    ${isPreviewState ? 'Preview only — detailed Karnataka data is live now.' : `Click to ${type === 'state' ? 'drill down' : 'view details'}`}
+                </div>
             `;
         })
         .on('mousemove', function (event) {
@@ -335,12 +391,26 @@ function updateGlobalStats(dataSet) {
     document.getElementById('high-risk-count').textContent = highRiskCount;
 }
 
-function showMapError(message) {
+function showMapMessage(message, type = 'error') {
     document.getElementById('map-loader').style.display = 'none';
     const errorDiv = document.getElementById('map-error');
     errorDiv.classList.remove('hidden');
-    errorDiv.querySelector('p').textContent = message;
+    errorDiv.classList.toggle('info', type === 'info');
+    errorDiv.innerHTML = `
+        <i data-lucide="${type === 'info' ? 'info' : 'alert-circle'}"></i>
+        <p>${message}</p>
+    `;
     lucide.createIcons();
+}
+
+function hideMapMessage() {
+    const errorDiv = document.getElementById('map-error');
+    errorDiv.classList.add('hidden');
+    errorDiv.classList.remove('info');
+}
+
+function showMapError(message) {
+    showMapMessage(message, 'error');
 }
 
 function debounce(func, wait) {
