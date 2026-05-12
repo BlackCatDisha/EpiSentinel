@@ -1,0 +1,32 @@
+{
+  "threshold": 0.15,
+  "roc_auc": 0.8214067346034559,
+  "pr_auc": 0.8252141834971193,
+  "precision": 0.6221692491060786,
+  "recall": 0.8557377049180328,
+  "f1": 0.7204968944099379,
+  "confusion_matrix": [
+    [
+      423,
+      317
+    ],
+    [
+      88,
+      522
+    ]
+  ],
+  "model": "WeightedEnsembleNearOptimal",
+  "weights": {
+    "catboost": 0.29694170842335815,
+    "xgboost": 0.49535959728634066,
+    "lightgbm": 0.009117812822956982,
+    "rf": 0.0906623162319195,
+    "poisson": 0.10791856523542462
+  },
+  "val_f1_at_opt": 0.7416149068322981,
+  "dropped_features": [
+    "district",
+    "population_2011"
+  ],
+  "data_path": "/Users/ishanmahajan/WitchHunt/datasets/new_dataset.csv"
+}

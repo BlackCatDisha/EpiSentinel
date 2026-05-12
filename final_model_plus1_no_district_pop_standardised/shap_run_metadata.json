@@ -1,0 +1,21 @@
+{
+  "train_years": [
+    -1.6211524267099895,
+    -0.8692676417192575,
+    -0.1173828567285253,
+    0.6345019282622069,
+    1.386386713252939
+  ],
+  "val_year": 2,
+  "test_year": 2,
+  "dropped_features": [
+    "district",
+    "population_2011"
+  ],
+  "feature_count": 28,
+  "files": {
+    "long": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_all_models_long.csv",
+    "combined": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_all_models_combined.csv",
+    "top10": "/Users/ishanmahajan/WitchHunt/artifacts/shap_all_models_plus1_no_district_pop/shap_top10_per_model.csv"
+  }
+}
