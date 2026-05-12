@@ -15,44 +15,11 @@ function initSidebar() {
     });
 }
 
-const INDIA_GEOJSON_URL = 'https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson';
-
-const STATE_DISTRICT_URLS = {
-    "Andhra Pradesh": "https://raw.githubusercontent.com/datta07/INDIAN-SHAPEFILES/master/STATES/ANDHRA%20PRADESH/ANDHRA%20PRADESH_DISTRICTS.geojson",
-    "Arunachal Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/arunachal_pradesh.geojson",
-    "Assam": "https://raw.githubusercontent.com/geohacker/india/master/district/assam.geojson",
-    "Bihar": "https://raw.githubusercontent.com/geohacker/india/master/district/bihar.geojson",
-    "Chhattisgarh": "https://raw.githubusercontent.com/geohacker/india/master/district/chhattisgarh.geojson",
-    "Goa": "https://raw.githubusercontent.com/geohacker/india/master/district/goa.geojson",
-    "Gujarat": "https://raw.githubusercontent.com/geohacker/india/master/district/gujarat.geojson",
-    "Haryana": "https://raw.githubusercontent.com/geohacker/india/master/district/haryana.geojson",
-    "Himachal Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/himachal_pradesh.geojson",
-    "Jammu & Kashmir": "https://raw.githubusercontent.com/geohacker/india/master/district/jammu_kashmir.geojson",
-    "Jharkhand": "https://raw.githubusercontent.com/geohacker/india/master/district/jharkhand.geojson",
-    "Karnataka": "karnataka_districts.json",
-    "Kerala": "https://raw.githubusercontent.com/geohacker/india/master/district/kerala.geojson",
-    "Madhya Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/madhya_pradesh.geojson",
-    "Maharashtra": "https://raw.githubusercontent.com/geohacker/india/master/district/maharashtra.geojson",
-    "Manipur": "https://raw.githubusercontent.com/geohacker/india/master/district/manipur.geojson",
-    "Meghalaya": "https://raw.githubusercontent.com/geohacker/india/master/district/meghalaya.geojson",
-    "Mizoram": "https://raw.githubusercontent.com/geohacker/india/master/district/mizoram.geojson",
-    "Nagaland": "https://raw.githubusercontent.com/geohacker/india/master/district/nagaland.geojson",
-    "Odisha": "https://raw.githubusercontent.com/geohacker/india/master/district/odisha.geojson",
-    "Punjab": "https://raw.githubusercontent.com/geohacker/india/master/district/punjab.geojson",
-    "Rajasthan": "https://raw.githubusercontent.com/geohacker/india/master/district/rajasthan.geojson",
-    "Sikkim": "https://raw.githubusercontent.com/geohacker/india/master/district/sikkim.geojson",
-    "Tamil Nadu": "https://raw.githubusercontent.com/geohacker/india/master/district/tamil_nadu.geojson",
-    "Telangana": "https://raw.githubusercontent.com/geohacker/india/master/district/telangana.geojson",
-    "Tripura": "https://raw.githubusercontent.com/geohacker/india/master/district/tripura.geojson",
-    "Uttar Pradesh": "https://raw.githubusercontent.com/geohacker/india/master/district/uttar_pradesh.geojson",
-    "Uttarakhand": "https://raw.githubusercontent.com/geohacker/india/master/district/uttarakhand.geojson",
-    "West Bengal": "https://raw.githubusercontent.com/geohacker/india/master/district/west_bengal.geojson",
-    "Delhi": "https://raw.githubusercontent.com/geohacker/india/master/district/delhi.geojson"
-};
+// Use local GeoJSON file for reliability (no external dependency)
+const INDIA_GEOJSON_URL = 'india_states.geojson';
 
 let currentView = 'india'; // 'india' or 'state'
 let currentGeoJSON = null;
-let indiaGeoJSON = null; // Always preserve the India map geojson
 let currentLevelData = stateData;
 let selectedState = null;
 let stateDistrictData = {}; // Cache for dummy district data
@@ -66,19 +33,8 @@ async function initDashboard() {
     // Back button logic
     const backBtn = document.getElementById('back-to-india');
     if (backBtn) {
-        backBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            currentView = 'india';
-            currentLevelData = stateData;
-            selectedState = null;
-            currentGeoJSON = indiaGeoJSON; // Restore India map
-            document.getElementById('map-title').textContent = 'India Overview';
-            document.getElementById('back-to-india').classList.add('hidden');
-            hideMapMessage();
-            if (indiaGeoJSON) {
-                renderMap(indiaGeoJSON, 'state');
-                updateGlobalStats(stateData);
-            }
+        backBtn.addEventListener('click', () => {
+            loadIndiaView();
         });
     }
 
@@ -109,12 +65,10 @@ async function loadIndiaView() {
     document.getElementById('map-title').textContent = 'India Overview';
     document.getElementById('back-to-india').classList.add('hidden');
     document.getElementById('map-loader').style.display = 'block';
-    hideMapMessage();
 
     try {
         const response = await fetch(INDIA_GEOJSON_URL);
-        indiaGeoJSON = await response.json();
-        currentGeoJSON = indiaGeoJSON;
+        currentGeoJSON = await response.json();
         renderMap(currentGeoJSON, 'state');
         updateGlobalStats(stateData);
     } catch (error) {
@@ -132,71 +86,44 @@ async function loadStateView(stateName) {
     document.getElementById('map-loader').style.display = 'block';
     document.getElementById('map-error').classList.add('hidden');
 
+    // Only Karnataka has full district data — show preview for others
+    if (stateName !== 'Karnataka') {
+        document.getElementById('map-loader').style.display = 'none';
+        if (currentGeoJSON && currentView === 'state') {
+            renderMap(currentGeoJSON, 'state');
+        }
+        currentLevelData = stateData;
+        updateGlobalStats(stateData);
+        document.getElementById('back-to-india').classList.remove('hidden');
+        showMapMessage(
+            `Coming soon — detailed district risk data is currently available only for Karnataka. This preview shows the district boundaries for ${stateName} while we expand our coverage.`,
+            'info'
+        );
+        return;
+    }
+
     try {
-        const url = STATE_DISTRICT_URLS[stateName];
         let geojson = null;
 
-        if (stateName === 'Karnataka') {
-            if (!url) {
-                throw new Error(`No district map URL available for ${stateName}.`);
-            }
+        // Load local Karnataka GeoJSON
+        try {
+            const response = await fetch('karnataka_districts.json');
+            if (response.ok) geojson = await response.json();
+        } catch (e) { console.warn('Local Karnataka GeoJSON failed:', e); }
 
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Failed to load from ${url}: ${response.status}`);
-            }
-
-            geojson = await response.json();
-            currentGeoJSON = geojson;
-            currentLevelData = districtData;
-            renderMap(currentGeoJSON, 'district');
-            updateGlobalStats(currentLevelData);
-            hideMapMessage();
-        } else {
-            if (url) {
-                try {
-                    const response = await fetch(url);
-                    if (response.ok) {
-                        geojson = await response.json();
-                        currentGeoJSON = geojson;
-                        if (!stateDistrictData[stateName]) {
-                            stateDistrictData[stateName] = generateDummyDistricts(currentGeoJSON.features);
-                        }
-                        currentLevelData = stateDistrictData[stateName];
-                        renderMap(currentGeoJSON, 'district');
-                        updateGlobalStats(currentLevelData);
-                    }
-                } catch (ignored) {
-                    // ignore fetch failures for preview-only states
-                }
-            }
-
-            if (!geojson) {
-                // if we cannot load the district boundary, keep the India map visible and show preview info
-                if (currentGeoJSON && currentView === 'state') {
-                    renderMap(currentGeoJSON, 'state');
-                }
-                currentLevelData = stateData;
-                updateGlobalStats(stateData);
-            }
-
-            document.getElementById('back-to-india').classList.remove('hidden');
-            showMapMessage(
-                `Coming soon — detailed district risk data is currently available only for Karnataka. This preview shows the district boundaries for ${stateName} while we expand our coverage.`,
-                'info'
-            );
+        if (!geojson) {
+            throw new Error('Could not load Karnataka district boundaries. Make sure karnataka_districts.json is present.');
         }
+
+        currentGeoJSON = geojson;
+        currentLevelData = districtData;
+
+        renderMap(currentGeoJSON, 'district');
+        updateGlobalStats(currentLevelData);
     } catch (error) {
         console.error(`Error loading ${stateName} map:`, error);
-        if (stateName !== 'Karnataka') {
-            showMapMessage(
-                `Coming soon — detailed district risk data is currently available only for Karnataka. ${stateName} is a preview state.`,
-                'info'
-            );
-        } else {
-            showMapError(`Failed to load district map for ${stateName}. ${error.message}`);
-            setTimeout(loadIndiaView, 8000); // Give user more time to read the error
-        }
+        showMapError(`Failed to load Karnataka district map. ${error.message}`);
+        setTimeout(loadIndiaView, 8000);
     }
 }
 
@@ -245,13 +172,13 @@ function renderMap(geojson, type) {
         .attr('fill', d => {
             const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
             const normName = normalizeName(name);
-            
-            // On India map (state view), only Karnataka is bright, all others are grey
+
+            // On India overview: Karnataka glows, all other states are greyed
             if (type === 'state') {
-                return normName === 'karnataka' ? '#10b981' : '#6b7280';
+                return normName === 'Karnataka' ? '#10b981' : '#6b7280';
             }
-            
-            // On district view, use risk score coloring
+
+            // District view: colour by risk score
             const data = currentLevelData[normName];
             if (!data) return '#334155';
             if (data.risk_score > 70) return '#ef4444';
@@ -265,7 +192,7 @@ function renderMap(geojson, type) {
             const name = d.properties.ST_NM || d.properties.NAME_1 || d.properties.district || d.properties.NAME_2 || d.properties.name;
             const normName = normalizeName(name);
             const data = currentLevelData[normName];
-            const isPreviewState = type === 'state' && normName !== 'karnataka';
+            const isPreviewState = type === 'state' && normName !== 'Karnataka';
 
             d3.select(this).style('stroke', 'white').style('stroke-width', '2px');
 
@@ -426,36 +353,277 @@ function debounce(func, wait) {
 }
 
 function initChatbot() {
-    const input = document.getElementById('chat-input');
+    const input   = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
     const chatMessages = document.getElementById('chat-messages');
 
-    const addMessage = (text, sender) => {
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function addMessage(html, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${sender}`;
-        msgDiv.innerHTML = `<p>${text}</p>`;
+        msgDiv.innerHTML = `<p>${html}</p>`;
         chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
+    }
 
-    const handleSend = () => {
+    function showTyping() {
+        const el = document.createElement('div');
+        el.className = 'message system typing-indicator';
+        el.id = 'typing-bubble';
+        el.innerHTML = '<span></span><span></span><span></span>';
+        chatMessages.appendChild(el);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return el;
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typing-bubble');
+        if (el) el.remove();
+    }
+
+    // ── Knowledge Base ────────────────────────────────────────────────────────
+    const PREVENTION = [
+        '🦟 <b>Eliminate standing water</b> — change cooler water weekly, clear clogged drains, cover water tanks.',
+        '🛏️ <b>Use mosquito nets</b> while sleeping, especially during peak transmission (dawn/dusk).',
+        '👕 <b>Wear full-sleeve clothing</b> in high-risk areas. Light-coloured fabric repels mosquitoes.',
+        '🧴 <b>Apply repellents</b> (DEET or Picaridin-based) when outdoors in high-risk districts.',
+        '🏥 <b>Seek immediate care</b> if you experience sudden high fever, severe headache, or rash.',
+        '🌿 <b>Use neem oil or citronella</b> as a natural repellent in homes.',
+        '🚿 <b>Fumigate high-risk zones</b> — coordinate with local BBMP/PHC for fogging drives.',
+        '🧹 <b>Community clean-up drives</b> — clear garbage, tyres, and flower pots that collect water.',
+    ];
+
+    const SYMPTOMS = `<b>Dengue Symptoms:</b><br>
+• Sudden high fever (104°F / 40°C)<br>
+• Severe headache behind eyes<br>
+• Muscle/joint pain ("breakbone fever")<br>
+• Skin rash (appears 2–5 days after fever)<br>
+• Mild bleeding (nose, gums)<br>
+• Fatigue and nausea<br><br>
+⚠️ <b>Warning signs (go to hospital immediately):</b> severe abdominal pain, vomiting blood, rapid breathing, bleeding under skin.`;
+
+    const TREATMENT = `<b>Dengue Treatment:</b><br>
+• <b>No antiviral drug exists</b> — treatment is supportive.<br>
+• Drink plenty of fluids (ORS, coconut water, fruit juice).<br>
+• Take <b>Paracetamol</b> for fever — <b>avoid Aspirin & Ibuprofen</b> (increase bleeding risk).<br>
+• Rest and monitor platelet count daily.<br>
+• Hospitalize if platelets drop below 100,000/µL.<br>
+• Papaya leaf extract may help improve platelet count (consult doctor first).`;
+
+    const MODEL_INFO = `<b>EpiSentinel Ensemble Model:</b><br>
+• <b>ROC-AUC: 0.821</b> | Recall: <b>85.6%</b> | F1: <b>0.720</b><br>
+• Weights: XGBoost 49% + CatBoost 30% + RF 9% + Poisson 11% + LightGBM 1%<br>
+• Data: 2022–2023 Karnataka district-week records (out-of-sample test)<br>
+• Key features: 4-week rolling case avg, lagged rainfall, temperature, humidity, NDWI, seasonal cycle<br>
+• Threshold: 0.15 probability → outbreak predicted`;
+
+    // ── Response Engine ───────────────────────────────────────────────────────
+    function getResponse(text) {
+        const t = text.toLowerCase().trim();
+
+        // ── Greetings ──
+        if (/^(hi|hello|hey|namaste|good\s?(morning|evening|afternoon))/.test(t)) {
+            return `Hello! 👋 I'm <b>Sentinel AI</b>, your epidemic intelligence assistant.<br>
+I can help you with:<br>
+• District risk scores & predictions<br>
+• Dengue prevention & symptoms<br>
+• Model performance details<br>
+• High-risk area alerts<br><br>
+Try asking: <i>"Which districts are high risk?"</i> or <i>"How to prevent dengue?"</i>`;
+        }
+
+        // ── Prevention / precautions ──
+        if (/prevent|precaution|avoid|protect|safe|repel|mosquito control|fogging|vector/.test(t)) {
+            const tips = PREVENTION.slice(0, 5).join('<br><br>');
+            return `🛡️ <b>Dengue Prevention Measures:</b><br><br>${tips}<br><br>
+💡 Tip: Click on any district on the map to see its specific risk level and recommended action.`;
+        }
+
+        // ── Symptoms ──
+        if (/symptom|sign|fever|rash|headache|joint pain|breakbone|platelet|bleed/.test(t)) {
+            return SYMPTOMS;
+        }
+
+        // ── Treatment / remedy ──
+        if (/treat|cure|remedy|medicine|tablet|drug|hospital|doctor|paracetamol|papaya|platelet/.test(t)) {
+            return TREATMENT;
+        }
+
+        // ── Model / accuracy / how does it work ──
+        if (/model|accuracy|recall|auc|roc|f1|ensemble|xgboost|catboost|how.*work|predict|shap|explain/.test(t)) {
+            return MODEL_INFO;
+        }
+
+        // ── What is dengue / about dengue ──
+        if (/what is dengue|about dengue|dengue fever|aedes/.test(t)) {
+            return `🦟 <b>What is Dengue?</b><br>
+Dengue is a mosquito-borne viral infection transmitted by the <i>Aedes aegypti</i> mosquito.<br><br>
+• Affects 400 million people globally per year<br>
+• 4 serotypes: DENV-1, 2, 3, 4 (second infection with different type = higher severity)<br>
+• Peak season in India: <b>post-monsoon (August–November)</b><br>
+• Karnataka hotspots: Bengaluru, Chitradurga, Kolar, Mandya<br><br>
+EpiSentinel predicts outbreak probability one week in advance using weather, lagged case counts and satellite data.`;
+        }
+
+        // ── Highest risk districts ──
+        if (/high.*risk|worst|most danger|critical|top.*district|highest/.test(t)) {
+            const sorted = Object.entries(districtData)
+                .sort((a, b) => b[1].risk_score - a[1].risk_score)
+                .slice(0, 5);
+            const list = sorted.map(([d, v]) =>
+                `• <b>${d}</b> — Risk: <b>${v.risk_score}%</b> | ${v.status}`
+            ).join('<br>');
+            return `🔴 <b>Top 5 Highest-Risk Districts:</b><br><br>${list}<br><br>
+Click any district on the map for a full SHAP-based explanation.`;
+        }
+
+        // ── Lowest risk ──
+        if (/low.*risk|safe|least.*danger|lowest/.test(t)) {
+            const sorted = Object.entries(districtData)
+                .filter(([,v]) => v.risk_score > 0)
+                .sort((a, b) => a[1].risk_score - b[1].risk_score)
+                .slice(0, 5);
+            const list = sorted.map(([d, v]) =>
+                `• <b>${d}</b> — Risk: <b>${v.risk_score}%</b>`
+            ).join('<br>');
+            return `🟢 <b>5 Lowest-Risk Districts:</b><br><br>${list}`;
+        }
+
+        // ── Total cases / summary ──
+        if (/total|summary|overview|how many case|all district/.test(t)) {
+            const items = Object.values(districtData);
+            const totalCases = items.reduce((s, d) => s + d.predicted_cases, 0);
+            const avgRisk = (items.reduce((s, d) => s + d.risk_score, 0) / items.length).toFixed(1);
+            const critical = items.filter(d => d.risk_score > 70).length;
+            const high = items.filter(d => d.risk_score > 50 && d.risk_score <= 70).length;
+            return `📊 <b>Karnataka Overview (Week 50, 2023):</b><br><br>
+• Total predicted cases: <b>${totalCases}</b><br>
+• Average risk score: <b>${avgRisk}%</b><br>
+• Critical districts (>70%): <b>${critical}</b><br>
+• High-risk districts (50–70%): <b>${high}</b><br><br>
+Data sourced from EpiSentinel Ensemble model (ROC-AUC: 0.821).`;
+        }
+
+        // ── Specific district lookup ──
+        const districtNames = Object.keys(districtData);
+        const matched = districtNames.find(d => t.includes(d.toLowerCase()));
+        if (matched) {
+            const d = districtData[matched];
+            const riskColor = d.risk_score > 70 ? '🔴' : d.risk_score > 50 ? '🟡' : '🟢';
+            const action = d.risk_score > 60 ? 'Intensive Surveillance + Vector Control' : 'Routine Monitoring';
+            return `${riskColor} <b>${matched} District Report:</b><br><br>
+• Risk Score: <b>${d.risk_score}%</b> (${d.status})<br>
+• Predicted Cases: <b>${d.predicted_cases}</b><br>
+• Primary Driver: <b>${d.top_driver}</b><br>
+• Recommended Action: <b>${action}</b><br><br>
+<i>${d.detailed_explanation}</i>`;
+        }
+
+        // ── Rainfall / weather / seasonal ──
+        if (/rain|weather|temperature|humidity|season|monsoon|climate/.test(t)) {
+            return `🌧️ <b>Weather & Dengue Risk:</b><br><br>
+The EpiSentinel model uses these key weather signals:<br>
+• <b>Rainfall (lag-1 week)</b> — creates breeding sites, top driver in many districts<br>
+• <b>Temperature (lag-1 & lag-2)</b> — optimal mosquito breeding: 25–35°C<br>
+• <b>Humidity</b> — high humidity (>70%) accelerates larval development<br>
+• <b>NDWI</b> — satellite water body index (detects stagnant water pockets)<br><br>
+Post-monsoon weeks (Aug–Nov) carry the highest transmission risk in Karnataka.`;
+        }
+
+        // ── Recommendations ──
+        if (/recommend|action|what.*do|should.*do|advice|suggest/.test(t)) {
+            const critical = Object.entries(districtData)
+                .filter(([,v]) => v.risk_score > 70)
+                .map(([d]) => d);
+            return `📋 <b>Recommended Actions:</b><br><br>
+🔴 <b>Critical districts</b> (${critical.join(', ')}):<br>
+• Activate district rapid response teams<br>
+• Deploy emergency fogging & larviciding<br>
+• Increase IDSP weekly reporting frequency<br>
+• Set up additional OPD dengue-testing beds<br><br>
+🟡 <b>High-risk districts:</b> Enhance routine surveillance, awareness drives<br>
+🟢 <b>Low-risk districts:</b> Maintain passive reporting, vector index monitoring`;
+        }
+
+        // ── Default fallback with suggestions ──
+        const topDistrict = Object.entries(districtData)
+            .sort((a, b) => b[1].risk_score - a[1].risk_score)[0];
+        return `I can help with that! Try asking me:<br><br>
+• <i>"Which districts are highest risk?"</i><br>
+• <i>"How to prevent dengue?"</i><br>
+• <i>"What are dengue symptoms?"</i><br>
+• <i>"Tell me about ${topDistrict[0]}"</i><br>
+• <i>"What does the model predict?"</i><br>
+• <i>"What actions should be taken?"</i>`;
+    }
+
+    // ── Backend URL ───────────────────────────────────────────────────────────
+    const BACKEND_URL = 'http://127.0.0.1:8000/chat/general';
+    let backendAvailable = null; // null = untested, true/false after first attempt
+
+    async function tryBackend(userMessage) {
+        // Build a compact district context summary to give Gemini live data
+        const topDistricts = Object.entries(districtData)
+            .sort((a, b) => b[1].risk_score - a[1].risk_score)
+            .slice(0, 8)
+            .map(([d, v]) => `${d}: ${v.risk_score}% (${v.status})`)
+            .join(', ');
+        const context = `Karnataka dengue dashboard. Top districts by risk — ${topDistricts}`;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+        try {
+            const res = await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessage, district_context: context }),
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            backendAvailable = true;
+            // Convert markdown-style **bold** to <b> for display
+            return data.response
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\n/g, '<br>');
+        } catch (e) {
+            clearTimeout(timeout);
+            backendAvailable = false;
+            return null; // signal to use fallback
+        }
+    }
+
+    // ── Event Handlers ────────────────────────────────────────────────────────
+    const handleSend = async () => {
         const text = input.value.trim();
         if (!text) return;
-
         addMessage(text, 'user');
         input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
 
-        setTimeout(() => {
-            let response = "I'm analyzing the data for you. Karnataka currently shows the highest aggregated risk score. Would you like to see a state-wise breakdown?";
-            if (text.toLowerCase().includes('karnataka')) {
-                response = "In Karnataka, Kolar and Mysuru are currently high-risk districts. Would you like to see the detailed prediction for these areas?";
-            }
-            addMessage(response, 'system');
-        }, 1000);
+        const typingEl = showTyping();
+
+        // Try Gemini backend first; fall back to local engine
+        let response = null;
+        if (backendAvailable !== false) {
+            response = await tryBackend(text);
+        }
+        if (response === null) {
+            // Small extra delay so fallback doesn't feel instant-jarring
+            await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
+            response = getResponse(text);
+        }
+
+        removeTyping();
+        addMessage(response, 'system');
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
     };
 
     sendBtn.addEventListener('click', handleSend);
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleSend();
-    });
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') handleSend(); });
 }
