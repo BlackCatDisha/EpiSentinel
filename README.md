@@ -1,64 +1,71 @@
---- PROJECT: EpiSentinel ---
+# EpiSentinel: Technical Project Documentation
 
-WHAT IT IS:An AI-powered dengue outbreak prediction system that gives district health officers a 7–14 day early warning before outbreaks peak, at block/ward level granularity across Indian districts.
+## 1. Project Overview
+EpiSentinel is an advanced epidemic risk visualization and prediction dashboard designed for the state of Karnataka. It combines Machine Learning (Random Forest) with interactive geospatial visualizations (D3.js) to provide health officials with actionable insights into Dengue outbreaks.
 
-THE CORE PROBLEM (rigorous version):District Health Officers and block-level health workers in high-burden Indian districts cannot make proactive resource allocation decisions — specifically deploying field teams, initiating vector control, and pre-positioning medical supplies — at block spatial resolution more than 3 days before a dengue outbreak peaks. This is because existing surveillance systems (IDSP, NVBDCP) operate with a 21-day retrospective reporting lag, provide no sub-district granularity, and integrate no environmental or climate signals. Every outbreak response is therefore reactive, missing the biological intervention window of 14–21 days that exists between heavy rainfall and clinical case onset.
+---
 
-WHY 14 DAYS IS THE RIGHT NUMBER:Dengue has a fixed biological clock:
+## 2. File Architecture & Functionality
 
-Heavy rainfall → stagnant water → mosquito breeding: 7–10 days
+### **Frontend (Dashboard)**
+| File | Responsibility |
+| :--- | :--- |
+| `index.html` | The structural foundation. Contains the grid layout, Sidebar, Map Container, Chatbot UI, and the District Detail Modal. |
+| `style.css` | Implements a "Glassmorphism" design system. Handles responsiveness across mobile/desktop, sidebar animations, and risk-color tokens. |
+| `app.js` | The logic engine. Handles GeoJSON fetching, D3.js map rendering, dynamic scaling, event listeners (hover/click), and the chatbot shell. |
+| `data.js` | Contains the normalized prediction data and a name-mapping utility to sync GeoJSON district names with ML output names. |
 
-Extrinsic incubation period in mosquito: 8–12 days
+### **Backend & Data Science**
+| File | Responsibility |
+| :--- | :--- |
+| `predictions.json` | The bridge between ML and Frontend. Stores calculated risk scores, predicted cases, and thresholds for all districts. |
+| `randomforest_model_eval.py` | Training and evaluation script. Calculates MAE (Mean Absolute Error) and F1-scores to validate model accuracy on historical data. |
+| `randomforest_quantified_prediction.py` | The production script. It takes the latest available features and generates the final case counts and risk percentages. |
 
-Human incubation after bite: 4–7 days
+---
 
-Total: ~14–21 days from rainfall to case surge
+## 3. Dataset Analysis
 
-IDSP reporting lag on top: +21 days after cases appearSo the system needs to detect the signal (rainfall + environment) before the mosquito lifecycle completes.
+### **Key Columns & Their Impact**
+*   **Cases (Target)**: The number of reported Dengue cases. Used as the label for training.
+*   **Temperature (Avg/Max/Min)**: Higher temperatures typically accelerate the mosquito life cycle.
+*   **Humidity**: High humidity (>60%) is essential for mosquito survival and egg-laying.
+*   **Rainfall**: Predicts stagnant water availability. However, excessive rainfall can "wash away" larvae (non-linear relationship).
+*   **Lagged Cases (1-4 weeks)**: The strongest predictor. Outbreaks are often auto-regressive (current cases predict future cases).
+*   **Population Density**: High-density urban areas (like Bengaluru Urban) show faster transmission rates.
 
-HOW THE SYSTEM WORKS:
+---
 
-Every morning, APIs pull three types of data:
+## 4. Modeling Strategy: Ensemble vs. Single
+For this project, an **Ensemble Model** is highly recommended over a single "one-size-fits-all" model.
 
-Climate: IMD (India Met Dept) and ERA5 for daily rainfall, temperature, humidity
+*   **Why?** Random Forest (our current model) is great at handling non-linear relationships and missing data. However, adding **XGBoost** or **LightGBM** in a "Stacked Ensemble" would help capture sudden spikes that a single Random Forest might smoothen out.
+*   **Benefit**: A combination reduces the variance of predictions, leading to more stable "Risk Scores" on the dashboard.
 
-Health: IDSP weekly dengue case reports (parsed from PDFs)
+---
 
-Satellite: Google Earth Engine for NDWI (water index) and NDVI (vegetation index) per ward
+## 5. Roadmap: Live Data & 14-Day Lead Time
 
-Feature engineering creates lag features (rainfall 7 days ago, cases 14 days ago), rolling averages, and a mosquito breeding index (NDWI × rainfall × temperature)
+### **Predicting 14 Days in Advance**
+Currently, we predict for the "Upcoming Week" (7-day lead). To extend this to 14 days:
+1.  **Feature Shifting**: We shift our lagged features from `t-1` to `t-2`.
+2.  **Reliability**: Accuracy will decrease slightly as weather forecasts become less certain beyond 7 days.
 
-Two AI models run in parallel:
+### **Linking Live Data**
+To make EpiSentinel truly live, we must implement an automated pipeline:
+*   **API Integration**: Use `requests` in Python to fetch weekly weather updates from APIs like OpenWeather.
+*   **Syncing**: The Python script should run automatically on a server (e.g., AWS Lambda or GitHub Actions) to overwrite `predictions.json` every week.
 
-LSTM: reads a 30-day time window per ward, detects temporal trends and delayed effects
+---
 
-XGBoost: reads today's snapshot of features, matches conditions to historical outbreak patterns
+## 6. Explainability Layer (XAI)
+To build trust with medical professionals, we should add **SHAP (SHapley Additive exPlanations)**.
+*   **The Goal**: When a user clicks on "Kolar" and sees "Critical Risk," the dashboard should explain: *"Risk is high due to a 30% spike in humidity and high case counts in neighboring districts last week."*
+*   **Implementation**: We can calculate these "Importance Scores" in the Python script and include them in the `predictions.json` for the frontend to display.
 
-Their scores are blended into one risk score (0–1) per ward per day
+---
 
-SHAP values from XGBoost explain why each ward is flagged in plain language
-
-Output goes three ways: heatmap dashboard for DHOs, SMS alerts via Bhashini API in local languages for field workers, and surge forecasts for hospital admins
-
-THE AI MODELS EXPLAINED SIMPLY:
-
-LSTM (Long Short-Term Memory): A neural network that reads data sequentially day by day, maintains a memory cell, and is good at detecting patterns across time — e.g. "sustained rainfall 2 weeks ago predicts cases today." Like a doctor reading your diary for the past month.
-
-XGBoost: 500 decision trees that each ask yes/no questions about today's data and vote. Each tree learns from the mistakes of the previous one (boosting). Good at feature interactions. Like 500 experienced doctors each with a checklist voting together.
-
-SHAP: A mathematical method that looks inside XGBoost and calculates exactly how much each feature (rainfall, temperature, water index etc.) contributed to the final risk score. Converts black-box predictions into plain-language justifications.
-
-TARGET USERS (personas):
-
-DHO (District Health Officer): Strategic — sees full ward-level heatmap, SHAP explanations, resource deployment recommendations
-
-NGO/Health Worker: Frontline — receives SMS in local language (Tamil, Hindi, Telugu) with block risk level and action
-
-Hospital Admin: Clinical — sees 14-day bed/ICU demand forecast for surge planning
-CURRENT SYSTEMS AND WHY THEY FAIL:
-
-IDSP: 21-day lag, district-level only, no forecast, passive reporting
-
-NVBDCP: Retrospective annual counts, no sub-district resolution, no prediction
-
-Hospital EMRs: Only detect outbreak after surge begins — too late by definitionNone integrate climate signals. None produce forward-looking risk at block granularity.
+## 7. Future Improvements
+1.  **Spatial Correlation**: Incorporate "Neighboring District" risks (if District A is high, District B's risk increases).
+2.  **Sentiment Analysis**: Scrape local news or social media for "fever" or "hospital" mentions as an early warning signal.
+3.  **Mobile App**: Package the dashboard as a PWA (Progressive Web App) for field workers.
