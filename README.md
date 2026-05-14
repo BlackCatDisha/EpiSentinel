@@ -1,7 +1,15 @@
 # EpiSentinel: Technical Project Documentation
 
 ## 1. Project Overview
-EpiSentinel is an advanced epidemic risk visualization and prediction dashboard designed for the state of Karnataka. It combines Machine Learning (Random Forest) with interactive geospatial visualizations (D3.js) to provide health officials with actionable insights into Dengue outbreaks.
+EpiSentinel is an AI-assisted dengue early warning and response platform for public health teams.
+
+It helps officials:
+- See outbreak risk clearly on an interactive map
+- Prioritize districts based on predicted risk and case load
+- Understand key risk drivers behind each prediction
+- Get fast, role-aware advisory guidance for field and policy actions
+
+Detailed district-level intelligence is currently available for Karnataka, while other states are shown in preview mode.
 
 ---
 
@@ -18,7 +26,11 @@ EpiSentinel is an advanced epidemic risk visualization and prediction dashboard 
 ### **Backend & Data Science**
 | File | Responsibility |
 | :--- | :--- |
-| `predictions.json` | The bridge between ML and Frontend. Stores calculated risk scores, predicted cases, and thresholds for all districts. |
+| `chatbot/main.py` | FastAPI app entrypoint, CORS setup, router inclusion, and static dashboard hosting at `/dashboard`. |
+| `chatbot/router.py` | Chat API endpoints: `/chat/general`, `/chat/district`, `/chat/state`. |
+| `chatbot/predict_router.py` | CSV upload inference endpoint at `POST /predict`; tries weighted ensemble first, then XGBoost fallback. |
+| `chatbot/episentinel_chatbot.py` | Prompt construction, role-specific schemas, SOP grounding (`context.md`), and Gemini invocation via LangChain. |
+| `dashboard/data.js` | Current district/state data used directly by the frontend map and local chatbot fallback. |
 | `randomforest_model_eval.py` | Training and evaluation script. Calculates MAE (Mean Absolute Error) and F1-scores to validate model accuracy on historical data. |
 | `randomforest_quantified_prediction.py` | The production script. It takes the latest available features and generates the final case counts and risk percentages. |
 
@@ -37,10 +49,11 @@ EpiSentinel is an advanced epidemic risk visualization and prediction dashboard 
 ---
 
 ## 4. Modeling Strategy: Ensemble vs. Single
-For this project, an **Ensemble Model** is highly recommended over a single "one-size-fits-all" model.
+For this project, the backend inference path is ensemble-first with fallback logic.
 
-*   **Why?** Random Forest (our current model) is great at handling non-linear relationships and missing data. However, adding **XGBoost** or **LightGBM** in a "Stacked Ensemble" would help capture sudden spikes that a single Random Forest might smoothen out.
-*   **Benefit**: A combination reduces the variance of predictions, leading to more stable "Risk Scores" on the dashboard.
+*   `POST /predict` first attempts to load `final_model_plus1_no_district_pop_standardised/weighted_ensemble_plus1_near_optimal_no_district_pop.joblib`.
+*   If ensemble artifacts/dependencies are unavailable, it falls back to `xgboost_trained/episentinel_pipeline.joblib`.
+*   This gives resilient startup behavior while preserving a stronger default model path.
 
 ---
 
@@ -59,13 +72,101 @@ To make EpiSentinel truly live, we must implement an automated pipeline:
 ---
 
 ## 6. Explainability Layer (XAI)
-To build trust with medical professionals, we should add **SHAP (SHapley Additive exPlanations)**.
-*   **The Goal**: When a user clicks on "Kolar" and sees "Critical Risk," the dashboard should explain: *"Risk is high due to a 30% spike in humidity and high case counts in neighboring districts last week."*
-*   **Implementation**: We can calculate these "Importance Scores" in the Python script and include them in the `predictions.json` for the frontend to display.
+Explainability is currently implemented in two forms:
+*   **Dashboard-level explanations** come from precomputed text in `dashboard/data.js` (`top_driver`, `detailed_explanation`).
+*   **`/predict` endpoint responses** include a fast proxy explanation by selecting the highest-magnitude feature for each row (not full per-request SHAP for latency reasons).
+
+The repository also includes SHAP-related scripts/artifacts under model directories for offline analysis.
 
 ---
 
-## 7. Future Improvements
+## 7. Chatbot Feature
+
+EpiSentinel includes an in-dashboard AI assistant designed for real public-health workflows.
+
+### What the chatbot helps with
+- Interpreting district risk and predicted case trends
+- Explaining likely outbreak drivers in plain language
+- Recommending practical next actions for surveillance and response
+- Answering dengue preparedness questions for rapid decision-making
+
+### Role-aware guidance
+The advisory flow is tailored for:
+- District Health Officers
+- Hospital Managers
+- State Health Officials
+
+Each role gets recommendations aligned to operational priorities, from district-level action plans to state-level resource coordination.
+
+### Grounded, policy-aware responses
+Chat responses are guided by context provided by us so recommendations stay aligned with public-health protocols and escalation practices.
+
+---
+
+## 8. Future Improvements
 1.  **Spatial Correlation**: Incorporate "Neighboring District" risks (if District A is high, District B's risk increases).
 2.  **Sentiment Analysis**: Scrape local news or social media for "fever" or "hospital" mentions as an early warning signal.
 3.  **Mobile App**: Package the dashboard as a PWA (Progressive Web App) for field workers.
+
+---
+
+## 9. First-Time Setup and Run (New System)
+
+Follow these steps if you are running EpiSentinel for the first time on a fresh machine.
+
+### Prerequisites
+- Python 3.10+ installed
+- `pip` available
+- A Gemini API key from https://aistudio.google.com/
+
+### Step 1: Clone and enter the project
+```bash
+git clone <your-repo-url>
+cd EpiSentinel
+```
+
+### Step 2: Create and activate a virtual environment
+Windows (PowerShell):
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+macOS/Linux:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Step 3: Install dependencies
+```bash
+pip install -r chatbot/requirements.txt
+```
+
+### Step 4: Create environment file for the backend
+Create `chatbot/.env` with:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+CONTEXT_MD_PATH=context.md
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+Notes:
+- `CONTEXT_MD_PATH=context.md` works because the backend is run from inside the `chatbot` folder.
+- Keep the API key private and never commit `.env` to Git.
+
+### Step 5: Start the backend API + dashboard host
+```bash
+cd chatbot
+uvicorn main:app --reload --port 8000
+```
+
+If startup is successful, open:
+- Dashboard: http://127.0.0.1:8000/dashboard/
+- API docs: http://127.0.0.1:8000/docs
+
+
+
+### Common issues
+- `GOOGLE_API_KEY not set`: verify `chatbot/.env` exists and backend was started from the `chatbot` directory.
+- Model load fallback warning: the app tries ensemble first, then falls back to XGBoost if ensemble dependencies/artifacts are unavailable.
